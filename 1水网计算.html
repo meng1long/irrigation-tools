@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no">
+    <title>喷头计算器</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{padding:15px;font-family:Arial;font-size:14px;background:#f5f5f5;}
+        .box{max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 0 12px rgba(0,0,0,0.15);position:relative;}
+        h1{text-align:center;color:#2c3e50;font-size:18px;margin-bottom:25px;font-weight:bold;}
+        .inp-group{margin-bottom:18px;}
+        .inp-group label{display:block;margin-bottom:6px;color:#34495e;font-weight:500;}
+        .inp-group input{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:15px;outline:none;}
+        .inp-group select{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:15px;outline:none;background:#fff;}
+        .inp-group input:focus{border-color:#3498db;}
+        .btn{width:100%;padding:13px;background:#27ae60;color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin:10px 0 25px;}
+        .btn:active{background:#219a52;}
+        .result{display:none;}
+        .title{font-size:16px;color:#2c3e50;font-weight:bold;margin:18px 0 12px;padding-bottom:6px;border-bottom:2px solid #ecf0f1;}
+        .param p{line-height:2.2;color:#34495e;margin:6px 0;}
+        table{width:100%;border-collapse:collapse;margin:10px 0;}
+        th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+        th{background:#ecf0f1;color:#2c3e50;font-weight:bold;}
+        .total{background:#f8f9fa;font-weight:bold;color:#e74c3c;}
+        .discount-row{background:#fdf2f8;color:#9f7aea;font-weight:bold;}
+        .final-total{background:#e8f5e9;color:#27ae60;font-weight:bold;font-size:15px;}
+        .tips{font-size:12px;color:#7f8c8d;margin-top:10px;text-align:center;}
+        .qty-input{width:60px;padding:4px;text-align:center;border:1px solid #ddd;border-radius:4px;}
+        .qty-input:disabled{background:#f5f5f5;cursor:not-allowed;}
+        .custom-item{display:none;} /* 隐藏件默认隐藏 */
+        .show-custom .custom-item{display:table-row;}
+        /* 核心修复：强制显示有数量的隐藏配件，优先级最高 */
+        .custom-item.show-custom-item{display:table-row !important;}
+        /* 新增：强制显示有数量的hide-item配件，优先级最高 */
+.hide-item.show-hide-item{display:table-row !important;}
+        .hide-item{display:none;} /* 完全隐藏的行（仅用于初始区分，显示按钮触发后全部显示） */
+        .hidden-visually{visibility:hidden;} /* 视觉隐藏但保留位置 */
+        /* 正常件底色 */
+        .dili{background-color: #e8f5e9;} /* 地里必备-浅绿 */
+        .ditou{background-color: #e3f2fd;} /* 地头必备-浅蓝 */
+        .beiyong{background-color: #fff3e0;} /* 备用件-浅黄 */
+        /* 隐藏件底色（对应分类浅灰调，保留辨识度） */
+        .custom-item.dili{background-color: #f2f9f2;} /* 地里隐藏件-浅绿灰 */
+        .custom-item.ditou{background-color: #f2f7fd;} /* 地头隐藏件-浅蓝灰 */
+        .custom-item.beiyong{background-color: #fef9f2;} /* 备用件-浅黄灰 */
+        .switch-container{display:flex;justify-content:space-between;align-items:center;margin:15px 0;padding:0 10px;flex-wrap:wrap;gap:10px;}
+        .switch-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;}
+        .switch{position:relative;width:50px;height:26px;border-radius:13px;background:#ddd;cursor:pointer;transition:background 0.3s;}
+        .switch::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left 0.3s;}
+        .switch.active{background:#3498db;}
+        .switch.active::after{left:26px;}
+        .switch-text{font-size:13px;color:#34495e;font-weight:500;white-space:nowrap;}
+        .gun-switch-wrap{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:20px;padding:10px;background:#f8f9fa;border-radius:8px;flex-wrap:wrap;}
+        .history-btn-group{position:absolute;top:20px;right:20px;display:flex;gap:8px;}
+        .history-small-btn{width:40px;height:40px;border-radius:50%;border:none;background:#f1f5f9;color:#2c3e50;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+        .history-small-btn:hover{background:#e1eaf1;}
+        .history-small-btn.clear-btn{background:#fef2f2;color:#dc2626;}
+        .history-panel{margin:15px 0;padding:10px;background:#f8fafc;border-radius:6px;max-height:150px;overflow-y:auto;display:none;}
+        .history-panel.show{display:block;}
+        .history-item{padding:8px;border-bottom:1px solid #e2e8f0;cursor:pointer;transition:background 0.2s;}
+        .history-item:last-child{border-bottom:none;}
+        .history-item:hover{background:#e6f7ff;}
+        .history-item span{display:inline-block;margin:0 4px;color:#34495e;font-size:13px;}
+        .history-time{color:#7f8c8d;font-size:12px;}
+        .modal-mask{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999;display:none;}
+        .modal-box{background:#fff;padding:25px;border-radius:10px;width:80%;max-width:300px;text-align:center;}
+        .modal-title{font-size:16px;color:#2c3e50;font-weight:bold;margin-bottom:20px;}
+        .modal-btn-group{display:flex;gap:10px;}
+        .modal-btn{flex:1;padding:10px;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;}
+        .modal-confirm{background:#dc2626;color:#fff;}
+        .modal-cancel{background:#f1f5f9;color:#2c3e50;}
+        /* 优惠减免区域样式 */
+        .discount-container{margin:15px 0;padding:15px;background:#faf0f5;border-radius:8px;}
+        .discount-title{font-size:15px;color:#2c3e50;font-weight:bold;margin-bottom:10px;}
+        .discount-input-group{display:flex;gap:10px;margin-bottom:10px;}
+        .discount-input-group input{flex:1;}
+        .discount-btn{width:100%;padding:10px;background:#9f7aea;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;}
+        .discount-btn:active{background:#805ad5;}
+        /* 移动端表格适配 */
+        @media screen and (max-width: 480px) {
+            th,td{padding:4px;font-size:12px;}
+            .qty-input{width:40px;padding:2px;}
+            .discount-input-group{flex-direction:column;}
+        }
+    </style>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="box">
+        <h1>喷头计算器</h1>
+        <div class="history-btn-group">
+            <button class="history-small-btn" id="toggleHistoryBtn">📜</button>
+            <button class="history-small-btn clear-btn" id="clearHistoryBtn">🗑️</button>
+        </div>
+        
+        <!-- 喷头类型下拉框 -->
+        <div class="inp-group">
+            <label>喷头类型</label>
+            <select id="nozzleType">
+                <option value="four">四嘴喷头</option>
+                <option value="sand">防沙喷头</option>
+                <option value="custom">自定义喷头</option>
+            </select>
+        </div>
+        
+        <div class="gun-switch-wrap">
+            <div class="switch-wrap" data-size="1.2">
+                <span class="switch-text">1.2米喷头</span>
+                <div class="switch active" id="gun12Switch"></div>
+            </div>
+            <div class="switch-wrap" data-size="1.5">
+                <span class="switch-text">1.5米喷头</span>
+                <div class="switch" id="gun15Switch"></div>
+            </div>
+        </div>
+        
+        <div class="inp-group">
+            <label>地块长度(米)</label>
+            <input type="number" id="plotLength" placeholder="例：200" min="1" value="200">
+        </div>
+        <div class="inp-group">
+            <label>地块宽度(米)</label>
+            <input type="number" id="plotWidth" placeholder="例：48" min="1" value="48">
+        </div>
+        <div class="inp-group">
+            <label>喷头间距(米)</label>
+            <input type="number" id="nozzleDiameter" placeholder="四嘴16/防沙10" min="8" value="16">
+        </div>
+        <div class="inp-group">
+            <label>列间距(米)</label>
+            <input type="number" id="colGap" placeholder="四嘴16/防沙10" min="5" value="16">
+        </div>
+        
+        <div class="history-panel" id="historyPanel"></div>
+        <button class="btn" id="calcBtn">计算</button>
+        
+        <div class="result" id="result">
+            <div class="switch-container">
+                <div class="switch-wrap" data-action="edit">
+                    <span class="switch-text" id="editText">锁定数量</span>
+                    <div class="switch" id="editSwitch"></div>
+                </div>
+                <div class="switch-wrap" data-action="custom">
+                    <span class="switch-text" id="customText">显示所有配件</span>
+                    <div class="switch" id="customSwitch"></div>
+                </div>
+            </div>
+            
+            <!-- 新增：优惠减免区域 -->
+            <div class="discount-container">
+                <div class="discount-title">💰 优惠减免</div>
+                <div class="discount-input-group">
+                    <input type="number" id="discountAmount" placeholder="输入减免金额（元）" min="0" step="0.1" value="0">
+                </div>
+                <button class="discount-btn" id="applyDiscountBtn">应用减免</button>
+            </div>
+            
+            <div class="title">一、核心参数</div>
+            <div class="param" id="param"></div>
+            <div class="title">二、物料清单</div>
+            <table id="materialTable">
+    <tr>
+    <th>分类</th>
+    <th>配件名称</th>
+    <th>规格</th>
+    <th>单价(元)</th>
+    <th>数量</th>
+    <th>合计(元)</th>
+</tr>
+    <!-- 地里必备 - 喷头 -->
+    <tr class="dili" id="nozzleTr">
+        <td>地里必备</td>
+        <td id="nozzleName">1.2米四嘴喷头整套</td>
+        <td>套</td>
+        <td id="nozzlePrice">20</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q1" min="0" value="0" disabled></td>
+        <td id="s1">0.0</td>
+    </tr>
+    <!-- 四嘴专属支管 -->
+    <tr class="dili hide-item" id="pipe8mTr">
+        <td>地里必备</td>
+        <td>2.5寸支管整套(8米)</td>
+        <td>盘</td>
+        <td>26</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q2" min="0" value="0" disabled></td>
+        <td id="s2">0.0</td>
+    </tr>
+    <tr class="dili hide-item" id="pipe16mTr">
+        <td>地里必备</td>
+        <td>2.5寸支管整套(16米)</td>
+        <td>盘</td>
+        <td>39</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q3" min="0" value="0" disabled></td>
+        <td id="s3">0.0</td>
+    </tr>
+    <!-- 防沙专属支管 -->
+    <tr class="dili hide-item" id="pipe5mTr">
+        <td>地里必备</td>
+        <td>2.5寸支管整套(5米)</td>
+        <td>盘</td>
+        <td>14</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s5" min="0" value="0" disabled></td>
+        <td id="s_s5">0.0</td>
+    </tr>
+    <tr class="dili hide-item" id="pipe10mTr">
+        <td>地里必备</td>
+        <td>2.5寸支管整套(10米)</td>
+        <td>盘</td>
+        <td>27</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s10" min="0" value="0" disabled></td>
+        <td id="s_s10">0.0</td>
+    </tr>
+    <!-- 通用地里物料 -->
+    <tr class="dili" id="rawTapeTr">
+        <td>地里必备</td>
+        <td>生料带</td>
+        <td>卷</td>
+        <td>0.8</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q4" min="0" value="0" disabled></td>
+        <td id="s4">0.0</td>
+    </tr>
+    <tr class="dili" id="rubberPlugTr">
+        <td>地里必备</td>
+        <td>2.5寸堵头(胶)</td>
+        <td>个</td>
+        <td>1.5</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q5" min="0" value="0" disabled></td>
+        <td id="s5">0.0</td>
+    </tr>
+    <!-- 地头必备 - 主管 -->
+    <tr class="ditou hide-item" id="main16mTr">
+        <td>地头必备</td>
+        <td>3寸16米主管套装</td>
+        <td>盘</td>
+        <td>62</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q8" min="0" value="0" disabled></td>
+        <td id="s8">0.0</td>
+    </tr>
+    <tr class="ditou hide-item" id="main10mTr">
+        <td>地头必备</td>
+        <td>3寸主管10米</td>
+        <td>盘</td>
+        <td>43</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s3" min="0" value="0" disabled></td>
+        <td id="s_s3">0.0</td>
+    </tr>
+    <!-- 通用地头物料 -->
+    <tr class="ditou hide-item" id="threeWayTr">
+        <td>地头必备</td>
+        <td>3寸转2.5寸三通1阀整套</td>
+        <td>套</td>
+        <td>39</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q6" min="0" value="0" disabled></td>
+        <td id="s6">0.0</td>
+    </tr>
+    <tr class="ditou hide-item" id="fourWayTr">
+        <td>地头必备</td>
+        <td>3寸转2.5寸四通2阀整套</td>
+        <td>套</td>
+        <td>49</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q7" min="0" value="0" disabled></td>
+        <td id="s7">0.0</td>
+    </tr>
+    <tr class="ditou" id="aluminumPlugTr">
+        <td>地头必备</td>
+        <td>3寸堵头(铝)</td>
+        <td>个</td>
+        <td>4.5</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q9" min="0" value="0" disabled></td>
+        <td id="s9">0.0</td>
+    </tr>
+    <!-- 备用件 - 正常件 -->
+    <tr class="beiyong" id="rubberJointTr">
+        <td>备用件</td>
+        <td>2.5寸胶对接头</td>
+        <td>套</td>
+        <td>2</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q11" min="0" value="0" disabled></td>
+        <td id="s11">0.0</td>
+    </tr>
+    <tr class="beiyong" id="rubberGasketTr">
+        <td>备用件</td>
+        <td>2.5寸内垫(密封圈)</td>
+        <td>个</td>
+        <td>0.7</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q12" min="0" value="0" disabled></td>
+        <td id="s12">0.0</td>
+    </tr>
+    <tr class="beiyong" id="clampTr">
+        <td>备用件</td>
+        <td>2.5寸卡箍</td>
+        <td>个</td>
+        <td>0.4</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q10" min="0" value="0" disabled></td>
+        <td id="s10">0.0</td>
+    </tr>
+    <!-- 隐藏件 - 地头必备 -->
+    <tr class="custom-item ditou" id="fourWay3ValveTr">
+        <td>地头必备</td>
+        <td>2.5寸四通3阀整套</td>
+        <td>套</td>
+        <td>49</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q13" min="0" value="0" disabled></td>
+        <td id="s13">0.0</td>
+    </tr>
+    <tr class="custom-item ditou" id="threeWay3ValveTr">
+        <td>地头必备</td>
+        <td>3寸四通3阀整套</td>
+        <td>套</td>
+        <td>59</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q14" min="0" value="0" disabled></td>
+        <td id="s14">0.0</td>
+    </tr>
+    <!-- 隐藏件 - 主管类 -->
+    <tr class="custom-item ditou" id="bigMainPipe25Tr">
+        <td>地头必备</td>
+        <td>2.5寸主管100米(不带配件)</td>
+        <td>盘</td>
+        <td>200</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q23" min="0" value="0" disabled></td>
+        <td id="s23">0.0</td>
+    </tr>
+    <tr class="custom-item ditou" id="bigMainPipe3Tr">
+        <td>地头必备</td>
+        <td>3寸主管100米(不带配件)</td>
+        <td>盘</td>
+        <td>270</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q24" min="0" value="0" disabled></td>
+        <td id="s24">0.0</td>
+    </tr>
+    <tr class="custom-item ditou" id="bigMainPipe4Tr">
+        <td>地头必备</td>
+        <td>4寸主管100米(不带配件)</td>
+        <td>盘</td>
+        <td>340</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q25" min="0" value="0" disabled></td>
+        <td id="s25">0.0</td>
+    </tr>
+    <!-- 隐藏件 - 地里必备 -->
+    <tr class="custom-item dili" id="controlValveTr">
+        <td>地里必备</td>
+        <td>控制阀门加短接</td>
+        <td>个</td>
+        <td>5</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q21" min="0" value="0" disabled></td>
+        <td id="s21">0.0</td>
+    </tr>
+    <tr class="custom-item dili" id="longPipeTr">
+        <td>地里必备</td>
+        <td>2.5寸支管50米(不带配件)</td>
+        <td>盘</td>
+        <td>100</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q22" min="0" value="0" disabled></td>
+        <td id="s22">0.0</td>
+    </tr>
+    <tr class="custom-item dili" id="waterNeedleTr">
+        <td>地里必备</td>
+        <td>喷头分水针</td>
+        <td>个</td>
+        <td>1.5</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q18" min="0" value="0" disabled></td>
+        <td id="s18">0.0</td>
+    </tr>
+    <!-- 隐藏件 - 备用件 -->
+    <tr class="custom-item beiyong" id="aluminumJointTr">
+        <td>备用件</td>
+        <td>3寸对接头(铝)</td>
+        <td>套</td>
+        <td>7</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q15" min="0" value="0" disabled></td>
+        <td id="s15">0.0</td>
+    </tr>
+    <tr class="custom-item beiyong" id="bigGasketTr">
+        <td>备用件</td>
+        <td>3寸内垫(密封圈)</td>
+        <td>个</td>
+        <td>0.7</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q17" min="0" value="0" disabled></td>
+        <td id="s17">0.0</td>
+    </tr>
+    <tr class="custom-item beiyong" id="bigClampTr">
+        <td>备用件</td>
+        <td>3寸卡箍</td>
+        <td>个</td>
+        <td>0.5</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q26" min="0" value="0" disabled></td>
+        <td id="s26">0.0</td>
+    </tr>
+    <tr class="custom-item beiyong" id="2to3JointTr">
+        <td>备用件</td>
+        <td>2.5变3寸对接头(铝)</td>
+        <td>套</td>
+        <td>6</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q16" min="0" value="0" disabled></td>
+        <td id="s16">0.0</td>
+    </tr>
+    <tr class="custom-item beiyong" id="4to3JointTr">
+        <td>备用件</td>
+        <td>4寸变3寸对接头(铝)</td>
+        <td>套</td>
+        <td>10</td>
+        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q27" min="0" value="0" disabled></td>
+        <td id="s27">0.0</td>
+    </tr>
+    <!-- 总价行 -->
+    <tr class="total">
+        <td colspan="5">未减免总价</td>
+        <td id="originalTotal">0.0</td>
+    </tr>
+    <!-- 优惠减免行 -->
+    <tr class="discount-row">
+        <td colspan="5">优惠减免</td>
+        <td id="discountTotal">-0.0</td>
+    </tr>
+    <!-- 最终总价行 -->
+    <tr class="final-total">
+        <td colspan="5">最终应付金额</td>
+        <td id="finalTotal">0.0</td>
+    </tr>
+</table>
+            <!-- 下载按钮放在表格下方（原提示文字位置） -->
+<div style="text-align: center; margin: 20px 0;">
+    <button class="btn" style="background: #3498db; padding: 12px; font-size: 15px; width: 80%;" id="downloadTableBtn">📥 下载物料清单截图</button>
+</div>
+        </div>
+    </div>
+    <div class="modal-mask" id="clearModal">
+        <div class="modal-box">
+            <div class="modal-title">确认清空历史记录？</div>
+            <p style="color:#7f8c8d;margin-bottom:20px;font-size:14px;">此操作不可恢复，是否继续？</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn modal-confirm" id="confirmClearBtn">确认清空</button>
+                <button class="modal-btn modal-cancel" id="cancelClearBtn">取消</button>
+            </div>
+        </div>
+    </div>
+        <script>
+        const SYMMETRY_THRESHOLD = 240;
+        const PRICE_MAP = {
+    nozzle: { four12:20, four15:22, sand12:18, sand15:20, custom12:20, custom15:22 },
+    pipe: { eightM:26, sixteenM:39, fiveM:14, tenM:27, mainSixteenM:62, mainTenM:43 },
+    common: {
+        q4:0.8, q5:1.5, q6:39, q7:49, q9:4.5, q10:0.4, q11:2, q12:0.7,
+        q13:49, q14:59, q15:7, q16:6, q17:0.7, q18:1.5, q19:6, q20:10, // 修正：q15=7（3寸对接头），q16=6（2.5变3寸接头）
+        q21:5, q22:100, q23:200, q24:270, q25:340, q26:0.5 // q26=0.5（3寸卡箍）
+    }
+};
+        
+        let currentNozzleType = "four", currentNozzleSize = "1.2", isEdit = false, isCustomShow = false;
+        let historyList = JSON.parse(localStorage.getItem('calcHistory')) || []; 
+        let currentDiscount = 0;
+        // 存储有数量的配件ID（不管是custom还是hide）
+        let hasQtyItemIds = [];
+        
+        // DOM元素获取（包含所有需要控制的hide-item）
+        const el = {
+            nozzleType: document.getElementById('nozzleType'),
+            gun12Switch: document.getElementById('gun12Switch'),
+            gun15Switch: document.getElementById('gun15Switch'),
+            nozzleName: document.getElementById('nozzleName'),
+            nozzlePrice: document.getElementById('nozzlePrice'),
+            nozzleDiameter: document.getElementById('nozzleDiameter'),
+            colGap: document.getElementById('colGap'),
+            plotLength: document.getElementById('plotLength'),
+            plotWidth: document.getElementById('plotWidth'),
+            calcBtn: document.getElementById('calcBtn'),
+            result: document.getElementById('result'),
+            param: document.getElementById('param'),
+            originalTotal: document.getElementById('originalTotal'),
+            discountTotal: document.getElementById('discountTotal'),
+            finalTotal: document.getElementById('finalTotal'),
+            discountAmount: document.getElementById('discountAmount'),
+            applyDiscountBtn: document.getElementById('applyDiscountBtn'),
+            editSwitch: document.getElementById('editSwitch'),
+            editText: document.getElementById('editText'),
+            customSwitch: document.getElementById('customSwitch'),
+            customText: document.getElementById('customText'),
+            historyPanel: document.getElementById('historyPanel'),
+            toggleHistoryBtn: document.getElementById('toggleHistoryBtn'),
+            clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+            clearModal: document.getElementById('clearModal'),
+            confirmClearBtn: document.getElementById('confirmClearBtn'),
+            cancelClearBtn: document.getElementById('cancelClearBtn'),
+            // 所有核心hide-item
+            threeWayTr: document.getElementById('threeWayTr'),
+            fourWayTr: document.getElementById('fourWayTr'),
+            pipe8mTr: document.getElementById('pipe8mTr'),
+            pipe16mTr: document.getElementById('pipe16mTr'),
+            pipe5mTr: document.getElementById('pipe5mTr'),
+            pipe10mTr: document.getElementById('pipe10mTr'),
+            main16mTr: document.getElementById('main16mTr'),
+            main10mTr: document.getElementById('main10mTr'),
+            waterNeedleSpareTr: document.getElementById('waterNeedleSpareTr')
+        };
+        
+        // 所有需要控制显示的hide-item集合（统一管理）
+        const allHideItems = [
+            el.pipe8mTr, el.pipe16mTr, el.pipe5mTr, el.pipe10mTr,
+            el.main16mTr, el.main10mTr, el.threeWayTr, el.fourWayTr
+        ];
+        
+        // 所有custom-item集合
+        const allCustomItems = document.querySelectorAll('.custom-item');
+        
+        // 核心修复：数量变化时直接硬控显示，不依赖class
+        function recordCustomItemQty(input) {
+    const itemRow = input.closest('tr');
+    const qty = parseFloat(input.value) || 0;
+    // 只要数量>0，强制显示；数量=0，也不隐藏（避免消失）
+    itemRow.style.display = 'table-row !important';
+}
+        
+        // 判断是否是当前喷头类型的核心物料
+        function checkIsCoreItem(itemId) {
+            if (currentNozzleType === "four") {
+                return ['pipe8mTr', 'pipe16mTr', 'main16mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
+            } else if (currentNozzleType === "sand") {
+                return ['pipe5mTr', 'pipe10mTr', 'main10mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
+            } else if (currentNozzleType === "custom") {
+                return ['threeWayTr', 'fourWayTr'].includes(itemId);
+            }
+            return false;
+        }
+        
+        // 重置显示：不管什么状态，先按规则初始化，再强制显示有数量的
+        function resetAllItemsDisplay() {
+    // 初始化hide-item：核心物料显示，非核心默认隐藏
+    allHideItems.forEach(item => {
+        item.style.display = checkIsCoreItem(item.id) ? 'table-row' : 'none';
+    });
+    
+    // 初始化custom-item：默认隐藏
+    allCustomItems.forEach(item => {
+        item.style.display = 'none';
+    });
+    
+    // 关键逻辑：有数量的配件，强制显示（优先级最高，覆盖所有隐藏规则）
+    hasQtyItemIds.forEach(itemId => {
+        const item = document.getElementById(itemId);
+        if (item) item.style.display = 'table-row !important';
+    });
+    
+    // 显示所有配件时，强制全部显示
+    if (isCustomShow) {
+        allHideItems.forEach(item => item.style.display = 'table-row');
+        allCustomItems.forEach(item => item.style.display = 'table-row');
+    }
+}
+        
+        // 喷头类型变更处理
+        function handleNozzleTypeChange() {
+            currentNozzleType = el.nozzleType.value;
+            switch(currentNozzleType) {
+                case "four":
+                    el.nozzleDiameter.value = 16;
+                    el.colGap.value = 16;
+                    el.nozzleDiameter.disabled = true;
+                    el.colGap.disabled = true;
+                    break;
+                case "sand":
+                    el.nozzleDiameter.value = 10;
+                    el.colGap.value = 10;
+                    el.nozzleDiameter.disabled = true;
+                    el.colGap.disabled = true;
+                    break;
+                case "custom":
+                    el.nozzleDiameter.disabled = false;
+                    el.colGap.disabled = false;
+                    if (!isEdit) toggleEdit();
+                    break;
+            }
+            updateNozzleInfo();
+            resetAllItemsDisplay(); // 重新初始化显示
+            if (el.result.style.display === "block") calcTotal(true);
+        }
+        
+        // 切换显示所有配件（彻底改写）
+        function toggleCustom() {
+    isCustomShow = !isCustomShow;
+    // 开关只隐藏“数量为0”的隐藏配件
+    document.querySelectorAll('.custom-item, .hide-item').forEach(item => {
+        const qty = parseFloat(item.querySelector('.qty-input').value) || 0;
+        item.style.display = qty > 0 ? 'table-row !important' : (isCustomShow ? 'table-row' : 'none');
+    });
+    el.customText.innerText = isCustomShow ? '隐藏额外配件' : '显示所有配件';
+    el.customSwitch.classList.toggle('active', isCustomShow);
+}
+        
+        // 显示所有物料（用于初始化）
+        function showAllItems() {
+            allHideItems.forEach(item => item.style.display = 'table-row');
+            allCustomItems.forEach(item => item.style.display = 'table-row');
+        }
+        
+        // 数值取整为5或10的倍数
+        function to5or10(num) {
+            let ceilNum = Math.ceil(num);
+            return ceilNum <= 5 ? 5 : Math.ceil(ceilNum / 10) * 10;
+        }
+        
+        // 计算2.5寸堵头数量
+        function calc25Dutou(baseNum) {
+            if (baseNum < 5) return baseNum;
+            let div = baseNum / 5, y = Math.floor(div), tail = div - y;
+            return baseNum + (tail >= 0.5 ? y + 1 : y);
+        }
+        
+        // 计算3寸堵头数量
+        function calc3Dutou(wid, colNum) {
+            return colNum < 2 ? 0 : 1 + Math.floor(wid / 65);
+        }
+        
+        // 计算喷头布局
+        function calcNozzleLayout(X, nozzleGap) {
+            const isSymmetry = X > SYMMETRY_THRESHOLD;
+            const halfX = isSymmetry ? X / 2 : X;
+            const division = halfX / nozzleGap;
+            const divisionFixed = division.toFixed(3);
+            const y = Math.floor(division);
+            const tailRaw = division - y;
+            
+            let oddNum, evenNum;
+            if (tailRaw === 0) {
+                oddNum = y || 1;
+                evenNum = (y + 1) || 1;
+            } else if (tailRaw > 0 && tailRaw <= 0.5) {
+                oddNum = y + 1;
+                evenNum = y + 1;
+            } else if (tailRaw > 0.5 && tailRaw < 1) {
+                oddNum = y + 1;
+                evenNum = y + 2;
+            } else {
+                oddNum = y || 1;
+                evenNum = (y + 1) || 1;
+            }
+            const calcStr = isSymmetry 
+                ? `${X}÷2÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}` 
+                : `${X}÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}`;
+            return { isSymmetry, halfX, tail: tailRaw, y, odd: { num: oddNum }, even: { num: evenNum }, calcStr };
+        }
+        
+        // 计算宽度布局
+        function calcWidthLayout(widthVal, colGapVal) {
+            const division = widthVal / colGapVal;
+            const divisionFixed = division.toFixed(3);
+            const y = Math.floor(division);
+            const tail = (division - y).toFixed(3);
+            const calcStr = `${widthVal}÷${colGapVal}=${divisionFixed} | 商=${y} | 尾数=${tail}`;
+            return { calcStr, divisionFixed, y, tail: division - y };
+        }
+        
+        // 计算列数
+        function calcPipeNum(widthVal, colGapVal) {
+            let div = widthVal / colGapVal;
+            return div === Math.floor(div) ? div : Math.floor(div) + 1 || 1;
+        }
+        
+        // 计算短支管数量
+        function calcShortBranch(tail, pipeNum, evenColNum, isSplit) {
+            let num = 0;
+            if (tail === 0) num = pipeNum + evenColNum * 2;
+            else if (tail > 0 && tail <= 0.5) num = pipeNum * 2;
+            else if (tail > 0.5 && tail < 1) num = pipeNum + evenColNum * 2;
+            num = Math.max(num, 1);
+            return isSplit ? num * 2 : num;
+        }
+        
+        // 切换三通/四通显示（兼容新逻辑）
+        function toggleThreeFourWay(isSplit) {
+            if (isSplit) {
+                el.threeWayTr.style.display = isCustomShow ? 'table-row' : 'none';
+                el.fourWayTr.style.display = 'table-row';
+            } else {
+                el.threeWayTr.style.display = 'table-row';
+                el.fourWayTr.style.display = isCustomShow ? 'table-row' : 'none';
+            }
+            // 有数量则强制显示
+            if (hasQtyItemIds.includes('threeWayTr')) el.threeWayTr.style.display = 'table-row !important';
+            if (hasQtyItemIds.includes('fourWayTr')) el.fourWayTr.style.display = 'table-row !important';
+        }
+        
+        // 选择喷头尺寸
+        function chooseNozzleSize(size) {
+            currentNozzleSize = size;
+            if (size === "1.2") {
+                el.gun12Switch.classList.add('active');
+                el.gun15Switch.classList.remove('active');
+            } else {
+                el.gun12Switch.classList.remove('active');
+                el.gun15Switch.classList.add('active');
+            }
+            updateNozzleInfo();
+            if (el.result.style.display === "block") calcTotal(true);
+        }
+        
+        // 更新喷头名称和单价
+        function updateNozzleInfo() {
+            const nozzleKey = `${currentNozzleType}${currentNozzleSize.replace('.', '')}`;
+            const nozzlePrice = PRICE_MAP.nozzle[nozzleKey] || 20;
+            el.nozzleName.innerText = `${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴喷头整套" : currentNozzleType === "sand" ? "防沙喷头整套" : "自定义喷头整套"}`;
+            el.nozzlePrice.innerText = nozzlePrice;
+        }
+        
+        // 切换数量编辑状态
+        function toggleEdit() {
+            isEdit = !isEdit;
+            document.querySelectorAll('.qty-input').forEach(input => input.disabled = !isEdit);
+            el.editSwitch.classList.toggle('active', isEdit);
+            el.editText.innerText = isEdit ? '锁定数量' : '解锁数量';
+        }
+        
+        // 切换历史记录面板
+        function toggleHistory() {
+            el.historyPanel.classList.toggle('show');
+            if (el.historyPanel.classList.contains('show')) renderHistoryList();
+        }
+        
+        // 保存历史记录
+        function saveHistory(num1, num2, totalPrice) {
+            const now = new Date();
+            const timeStr = `${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const sortedNum1 = Math.max(num1, num2);
+            const sortedNum2 = Math.min(num1, num2);
+            const nozzleDesc = `${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴" : currentNozzleType === "sand" ? "防沙" : "自定义"}喷头`;
+            const item = { num1: sortedNum1, num2: sortedNum2, totalPrice, timeStr, nozzleDesc };
+            
+            const idx = historyList.findIndex(i => i.num1 === sortedNum1 && i.num2 === sortedNum2 && i.nozzleDesc === nozzleDesc);
+            if (idx > -1) {
+                historyList[idx].totalPrice = totalPrice;
+                historyList[idx].timeStr = timeStr;
+            } else {
+                historyList.unshift(item);
+                if (historyList.length > 5) historyList.pop();
+            }
+            
+            localStorage.setItem('calcHistory', JSON.stringify(historyList));
+            if (el.historyPanel.classList.contains('show')) renderHistoryList();
+        }
+        
+        // 渲染历史记录
+        function renderHistoryList() {
+            if (historyList.length === 0) {
+                el.historyPanel.innerHTML = '<div class="history-item">暂无历史记录</div>';
+                return;
+            }
+            
+            let html = '';
+            historyList.forEach((item, idx) => {
+                html += `<div class="history-item" data-index="${idx}">
+                    <span>${item.num1}×${item.num2}m</span>
+                    <span>|</span>
+                    <span>${item.nozzleDesc}</span>
+                    <span>|</span>
+                    <span>总价${item.totalPrice}</span>
+                    <div class="history-time">${item.timeStr}</div>
+                </div>`;
+            });
+            el.historyPanel.innerHTML = html;
+            
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', () => loadHistory(item.dataset.index));
+            });
+        }
+        
+        // 加载历史记录
+        function loadHistory(idx) {
+            const item = historyList[idx];
+            el.plotLength.value = item.num1;
+            el.plotWidth.value = item.num2;
+            
+            if (item.nozzleDesc.includes('四嘴')) el.nozzleType.value = 'four';
+            else if (item.nozzleDesc.includes('防沙')) el.nozzleType.value = 'sand';
+            else el.nozzleType.value = 'custom';
+            handleNozzleTypeChange();
+            
+            chooseNozzleSize(item.nozzleDesc.includes('1.2') ? '1.2' : '1.5');
+            
+            calc();
+            toggleHistory();
+        }
+        
+        // 显示清空确认弹窗
+        function showClearModal() {
+            historyList = JSON.parse(localStorage.getItem('calcHistory')) || [];
+            if (historyList.length === 0) {
+                alert('无记录可清');
+                return;
+            }
+            el.clearModal.style.display = 'flex';
+        }
+        
+        // 隐藏清空确认弹窗
+        function hideClearModal() {
+            el.clearModal.style.display = 'none';
+        }
+        
+        // 确认清空历史记录
+        function confirmClear() {
+            historyList = [];
+            localStorage.removeItem('calcHistory');
+            if (el.historyPanel.classList.contains('show')) renderHistoryList();
+            hideClearModal();
+            alert('记录已清空');
+        }
+        // ===================== 新增：配置持久化+回车触发 相关常量 =====================
+const CONFIG_KEY = "sprinklerAppConfig";
+const configFields = {
+  plotLength: { type: "input", selector: "#plotLength" },
+  plotWidth: { type: "input", selector: "#plotWidth" },
+  nozzleType: { type: "select", selector: "#nozzleType" },
+  gun12Switch: { type: "switch", selector: "#gun12Switch" },
+  gun15Switch: { type: "switch", selector: "#gun15Switch" },
+  nozzleDiameter: { type: "input", selector: "#nozzleDiameter" },
+  colGap: { type: "input", selector: "#colGap" },
+  discountAmount: { type: "input", selector: "#discountAmount" }
+};
+
+// ===================== 新增：配置持久化功能（刷新不丢数据） =====================
+function saveConfig() {
+  const config = {};
+  Object.keys(configFields).forEach(key => {
+    const field = configFields[key];
+    const element = document.querySelector(field.selector);
+    if (!element) return;
+    if (field.type === "input") config[key] = element.value;
+    else if (field.type === "select") config[key] = element.value;
+    else if (field.type === "switch") config[key] = element.classList.contains("active");
+  });
+  // 新增：保存“是否已经计算过”的状态
+  config.hasCalculated = el.result.style.display === "block";
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+}
+
+function loadConfig() {
+  const savedConfig = localStorage.getItem(CONFIG_KEY);
+  if (savedConfig) {
+    const config = JSON.parse(savedConfig);
+    Object.keys(configFields).forEach(key => {
+      const field = configFields[key];
+      const element = document.querySelector(field.selector);
+      if (!element || config[key] === undefined) return;
+      if (field.type === "input") element.value = config[key];
+      else if (field.type === "select") {
+        element.value = config[key];
+        handleNozzleTypeChange();
+      } else if (field.type === "switch") {
+        if (key === "gun12Switch" && config[key]) chooseNozzleSize("1.2");
+        if (key === "gun15Switch" && config[key]) chooseNozzleSize("1.5");
+      }
+    });
+    // 关键：如果之前计算过，刷新后自动重新计算（图表就出来了）
+    if (config.hasCalculated && config.plotLength && config.plotWidth) {
+      setTimeout(calc, 300); // 延迟一点执行，确保页面加载完
+    }
+  } else {
+    // 无配置时显示默认值
+    document.getElementById('plotLength').value = "200";
+    document.getElementById('plotWidth').value = "48";
+    document.getElementById('nozzleDiameter').value = "16";
+    document.getElementById('colGap').value = "16";
+    el.nozzleType.value = "four";
+    chooseNozzleSize("1.2");
+  }
+}
+
+function initConfigPersistence() {
+  window.addEventListener("load", loadConfig);
+  Object.keys(configFields).forEach(key => {
+    const field = configFields[key];
+    const element = document.querySelector(field.selector);
+    if (!element) return;
+    // 输入时实时保存，确保每改一个字都存下来
+    if (field.type === "input" || field.type === "select") {
+      element.addEventListener("input", saveConfig);
+      element.addEventListener("change", saveConfig);
+    } else if (field.type === "switch") {
+      element.addEventListener("click", saveConfig);
+    }
+  });
+  // 计算按钮点击时保存，同时标记“已计算”
+  el.calcBtn.addEventListener("click", function() {
+    el.result.style.display = "block"; // 标记为已计算
+    saveConfig(); // 保存状态
+  });
+}
+
+// ===================== 新增：仅长宽输入框回车触发生成 =====================
+function initEnterGenerateOnlyInSizeInputs() {
+  const lengthInput = document.getElementById('plotLength');
+  const widthInput = document.getElementById('plotWidth');
+  const calcBtn = document.getElementById('calcBtn');
+  [lengthInput, widthInput].forEach(input => {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calcBtn.click();
+      }
+    });
+  });
+  document.addEventListener('keydown', function(e) {
+    const activeElement = document.activeElement;
+    if (e.key === 'Enter' && activeElement !== lengthInput && activeElement !== widthInput) {
+      e.preventDefault();
+    }
+  }, { capture: true });
+}
+        
+        // 应用优惠减免
+        function applyDiscount() {
+            const discount = parseFloat(el.discountAmount.value) || 0;
+            const originalTotal = parseFloat(el.originalTotal.innerText) || 0;
+            
+            if (discount < 0) {
+                alert('减免金额不能为负数');
+                el.discountAmount.value = 0;
+                currentDiscount = 0;
+            } else if (discount > originalTotal) {
+                alert(`减免金额不能超过未减免总价（${originalTotal}元）`);
+                el.discountAmount.value = originalTotal;
+                currentDiscount = originalTotal;
+            } else {
+                currentDiscount = discount;
+            }
+            
+            el.discountTotal.innerText = `-${currentDiscount.toFixed(1)}`;
+            const finalTotal = (originalTotal - currentDiscount).toFixed(1) + "元";
+            el.finalTotal.innerText = finalTotal;
+            
+            if (el.result.style.display === "block") {
+                const X = Number(el.plotLength.value);
+                const widthVal = Number(el.plotWidth.value);
+                saveHistory(X, widthVal, finalTotal);
+            }
+        }
+        
+        // 计算总价
+function calcTotal(isApplyDiscount = true) {
+    let total = 0;
+    
+    document.querySelectorAll('[id^="s"]').forEach(el => {
+        if (el.id !== 'originalTotal' && el.id !== 'discountTotal' && el.id !== 'finalTotal') {
+            el.innerText = '0.0';
+        }
+    });
+    
+    // 喷头总价
+    const nozzleQty = parseFloat(document.getElementById('q1').value) || 0;
+    const nozzleUnitPrice = parseFloat(el.nozzlePrice.innerText) || 0;
+    const nozzleTotal = (nozzleQty * nozzleUnitPrice).toFixed(1);
+    document.getElementById('s1').innerText = nozzleTotal;
+    total += parseFloat(nozzleTotal);
+    
+    // 管子总价（四嘴+防沙专属）
+    const q2 = parseFloat(document.getElementById('q2').value) || 0;
+    const s2 = (q2 * PRICE_MAP.pipe.eightM).toFixed(1);
+    document.getElementById('s2').innerText = s2;
+    total += parseFloat(s2);
+    
+    const q3 = parseFloat(document.getElementById('q3').value) || 0;
+    const s3 = (q3 * PRICE_MAP.pipe.sixteenM).toFixed(1);
+    document.getElementById('s3').innerText = s3;
+    total += parseFloat(s3);
+    
+    const q_s5 = parseFloat(document.getElementById('q_s5').value) || 0;
+    const s_s5 = (q_s5 * PRICE_MAP.pipe.fiveM).toFixed(1);
+    document.getElementById('s_s5').innerText = s_s5;
+    total += parseFloat(s_s5);
+    
+    const q_s10 = parseFloat(document.getElementById('q_s10').value) || 0;
+    const s_s10 = (q_s10 * PRICE_MAP.pipe.tenM).toFixed(1);
+    document.getElementById('s_s10').innerText = s_s10;
+    total += parseFloat(s_s10);
+    
+    const q8 = parseFloat(document.getElementById('q8').value) || 0;
+    const s8 = (q8 * PRICE_MAP.pipe.mainSixteenM).toFixed(1);
+    document.getElementById('s8').innerText = s8;
+    total += parseFloat(s8);
+    
+    const q_s3 = parseFloat(document.getElementById('q_s3').value) || 0;
+    const s_s3 = (q_s3 * PRICE_MAP.pipe.mainTenM).toFixed(1);
+    document.getElementById('s_s3').innerText = s_s3;
+    total += parseFloat(s_s3);
+    
+    // 通用物料+隐藏件总价（遍历所有qty-input，确保无遗漏）
+    document.querySelectorAll('.qty-input').forEach(input => {
+        const qtyId = input.id;
+        // 跳过已单独统计的配件，避免重复计算
+        if (['q1', 'q2', 'q3', 'q_s5', 'q_s10', 'q8', 'q_s3'].includes(qtyId)) return;
+        
+        const sId = qtyId.startsWith('q_s') ? `s${qtyId.replace('q_', '')}` : `s${qtyId.replace('q', '')}`;
+        const sEl = document.getElementById(sId);
+        if (!sEl) return;
+        
+        let unitPrice = PRICE_MAP.common[qtyId] || 0;
+        if (unitPrice === 0) {
+            const priceCell = input.closest('tr').querySelector('td:nth-child(4)');
+            unitPrice = parseFloat(priceCell.innerText) || 0;
+        }
+        
+        const qty = parseFloat(input.value) || 0;
+        const subtotal = (qty * unitPrice).toFixed(1);
+        sEl.innerText = subtotal;
+        total += parseFloat(subtotal);
+    });
+    
+    const originalTotalStr = total.toFixed(1);
+    el.originalTotal.innerText = originalTotalStr;
+    
+    if (isApplyDiscount) {
+        applyDiscount();
+    } else {
+        el.discountTotal.innerText = `-${currentDiscount.toFixed(1)}`;
+        const finalTotal = (parseFloat(originalTotalStr) - currentDiscount).toFixed(1);
+        el.finalTotal.innerText = finalTotal;
+    }
+    
+    return el.finalTotal.innerText;
+}
+        
+        // 核心计算逻辑
+        function calc() {
+            const X = Number(el.plotLength.value);
+            const widthVal = Number(el.plotWidth.value);
+            const colGapVal = Number(el.colGap.value);
+            const nozzleGapVal = Number(el.nozzleDiameter.value);
+            
+            if (!X || !widthVal || !colGapVal || !nozzleGapVal || X <=0 || widthVal <=0 || colGapVal <=0 || nozzleGapVal <=0) {
+                alert('请填写有效的正数值');
+                return;
+            }
+            
+            const nozzleLayout = calcNozzleLayout(X, nozzleGapVal);
+            const widthLayout = calcWidthLayout(widthVal, colGapVal);
+            const pipeNum = calcPipeNum(widthVal, colGapVal);
+            const isSplit = nozzleLayout.isSymmetry;
+            const oddColNum = Math.ceil(pipeNum / 2);
+            const evenColNum = Math.floor(pipeNum / 2);
+            const finalOddNum = isSplit ? nozzleLayout.odd.num * 2 : nozzleLayout.odd.num;
+            const finalEvenNum = isSplit ? nozzleLayout.even.num * 2 : nozzleLayout.even.num;
+            const totalNozzle = Math.max(0, (oddColNum * finalOddNum) + (evenColNum * finalEvenNum));
+            
+            const mat = {
+                q1: totalNozzle,
+                q4: to5or10(totalNozzle / 3),
+                q5: calc25Dutou(isSplit ? pipeNum * 2 : pipeNum),
+                q6: Math.max(0, (pipeNum >= 2 && !isSplit) ? pipeNum : 0),
+                q7: Math.max(0, (pipeNum >= 2 && isSplit) ? pipeNum : 0),
+                q9: calc3Dutou(widthVal, pipeNum),
+                q10: to5or10(totalNozzle * 0.1) * 4,
+                q11: to5or10(totalNozzle * 0.1),
+                q12: to5or10(totalNozzle * 0.1) * 2,
+                q13:0, q14:0, q15:0, q16:0, q17:0, q18:0, q19:0, q20:0,
+                q21:0, q22:0, q23:0, q24:0, q25:0, q26:0,
+                q2:0, q3:0, q8:0, q_s5:0, q_s10:0, q_s3:0
+            };
+            
+            if (currentNozzleType === "four") {
+                mat.q2 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
+                mat.q3 = Math.max(0, totalNozzle - mat.q2);
+                mat.q8 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
+            } else if (currentNozzleType === "sand") {
+                mat.q_s5 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
+                mat.q_s10 = Math.max(0, totalNozzle - mat.q_s5);
+                mat.q_s3 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
+            }
+            
+            Object.keys(mat).forEach(key => {
+                const inputEl = document.getElementById(key);
+                if (inputEl) inputEl.value = mat[key];
+            });
+            
+            toggleThreeFourWay(isSplit);
+            resetAllItemsDisplay(); // 计算后重置显示，确保有数量的配件显示
+            
+            el.param.innerHTML = `
+                <p>✅ 分块：${isSplit ? `是(2块，单块${(X/2).toFixed(1)}m)` : '否'}</p>
+                <p>✅ 长度核算：${nozzleLayout.calcStr}</p>
+                <p>✅ 宽度核算：${widthLayout.calcStr}</p>
+                <p>✅ 列数：共${pipeNum}列(奇${oddColNum}/偶${evenColNum})</p>
+                <p>✅ 每列喷头数：奇${finalOddNum}支 偶${finalEvenNum}支 | 总喷头数${totalNozzle}支</p>
+                <p>✅ 喷头：${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴" : currentNozzleType === "sand" ? "防沙" : "自定义"}</p>
+            `;
+            
+            el.result.style.display = "block";
+            el.result.scrollIntoView({ behavior: "smooth" });
+            
+            const totalPrice = calcTotal();
+            saveHistory(X, widthVal, totalPrice);
+        }
+        
+        // 绑定所有事件（强化输入框监听）
+        function bindEvents() {
+            el.nozzleType.addEventListener('change', handleNozzleTypeChange);
+            
+            document.querySelectorAll('.switch-wrap[data-size]').forEach(wrap => {
+                wrap.addEventListener('click', () => chooseNozzleSize(wrap.dataset.size));
+            });
+            
+            document.querySelectorAll('.switch-wrap[data-action]').forEach(wrap => {
+                wrap.addEventListener('click', () => {
+                    wrap.dataset.action === 'edit' ? toggleEdit() : toggleCustom();
+                });
+            });
+            
+            el.toggleHistoryBtn.addEventListener('click', toggleHistory);
+            el.clearHistoryBtn.addEventListener('click', showClearModal);
+            el.confirmClearBtn.addEventListener('click', confirmClear);
+            el.cancelClearBtn.addEventListener('click', hideClearModal);
+            
+            el.calcBtn.addEventListener('click', calc);
+            
+            el.applyDiscountBtn.addEventListener('click', applyDiscount);
+            el.discountAmount.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') applyDiscount();
+            });
+            
+            // 三重事件绑定，确保数量变化100%触发
+            document.querySelectorAll('.qty-input').forEach(input => {
+            // ===== 1. 新增：前置零过滤逻辑（放在input事件最前面）=====
+        input.addEventListener('input', function() {
+            // 只保留数字，过滤非数字字符
+            let val = this.value.replace(/[^0-9]/g, '');
+            // 处理前置零：长度>1且以0开头，去掉所有前置零
+            if (val.length > 1 && val.startsWith('0')) {
+                val = val.replace(/^0+/, '');
+                // 若去掉后为空（如输入0000），保留一个0
+                if (val === '') val = '0';
+            }
+            // 赋值回输入框，确保至少为0
+            this.value = val || '0';
+            
+            // 原有逻辑：数量变化时记录并显示
+            recordCustomItemQty(this);
+        });
+                input.addEventListener('input', function() {
+                    recordCustomItemQty(this);
+                });
+                input.addEventListener('change', function() {
+                    recordCustomItemQty(this);
+                });
+                input.addEventListener('blur', function() {
+                    recordCustomItemQty(this);
+                    resetAllItemsDisplay(); // 失焦后再重置一次，双重保障
+                });
+            });
+        // 找到下载按钮的事件绑定，替换为以下代码
+el.downloadTableBtn = document.getElementById('downloadTableBtn');
+el.downloadTableBtn.addEventListener('click', async function() {
+    try {
+        const table = document.getElementById('materialTable');
+        // 确保有数量的配件显示
+        document.querySelectorAll('.qty-input').forEach(input => {
+            const qty = parseFloat(input.value) || 0;
+            if (qty > 0) input.closest('tr').style.display = 'table-row !important';
+        });
+        // 1. 高清截图表格
+        const canvas = await html2canvas(table, {
+            scale: 3, // 高清适配APP
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        });
+        // 2. 转为Blob并保存到相册目录
+        canvas.toBlob(blob => {
+            // 关键：DCIM是相册默认扫描目录
+            const fileName = `DCIM/灌溉物料清单_${new Date().getTime()}.png`;
+            saveAs(blob, fileName); // 用FileSaver保存到相册
+        });
+    } catch (err) {
+        // 失败提示已删除，如需保留可恢复alert语句
+    }
+});
+}
+        
+        // 页面初始化
+        window.onload = function() {
+            bindEvents();
+            el.nozzleDiameter.disabled = true;
+            el.colGap.disabled = true;
+            updateNozzleInfo();
+            resetAllItemsDisplay(); // 初始化显示规则
+            if (el.historyPanel.classList.contains('show')) renderHistoryList();
+            initConfigPersistence(); // 刷新保存配置
+  initEnterGenerateOnlyInSizeInputs(); // 回车触发计算
+};
+    </script>
+</body>
+</html>

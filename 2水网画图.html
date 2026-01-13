@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>灌溉布局计算器-奇偶列专属版（优化完整版）</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        body { 
+            font-family: "Microsoft YaHei", sans-serif; 
+            background: #f5f5f5;
+            padding: 15px;
+            overflow-x: auto;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .config-panel {
+            width: 100%;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px #ccc;
+            position: relative;
+            z-index: 1;
+        }
+        .config-panel h3 {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 18px;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .config-item label {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+        .config-item input, .config-item select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .config-item input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+            color: #999;
+        }
+        .switch-container {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .switch-container:hover {
+            background: #f5f5f5;
+        }
+        .switch-label {
+            font-size: 14px;
+            color: #333;
+            flex: 1;
+        }
+        .switch-box {
+            width: 40px;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.2s ease;
+        }
+        .switch-box::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s ease;
+        }
+        .switch-input:checked + .switch-box {
+            background: #27ae60;
+        }
+        .switch-input:checked + .switch-box::after {
+            left: 22px;
+        }
+        .switch-input {
+            display: none;
+        }
+        .gun-label-mode-switch {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            gap: 15px;
+        }
+        .gun-label-mode-switch span {
+            font-size: 14px;
+            color: #333;
+            flex: none;
+        }
+        .mode-text-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+        .mode-text {
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+        .mode-text.active {
+            opacity: 1;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .gun-label-mode-switch .mode-switch-wrap {
+            position: relative;
+            width: 60px;
+            height: 26px;
+            cursor: pointer;
+            flex: none;
+        }
+        .gun-label-mode-switch .switch-box {
+            width: 60px;
+            height: 26px;
+            position: relative;
+            cursor: pointer;
+        }
+        .gun-label-mode-switch .switch-box::after {
+            width: 22px;
+            height: 22px;
+            top: 2px;
+            left: 2px;
+            cursor: pointer;
+        }
+        .gun-label-mode-switch .switch-input:checked + .switch-box::after {
+            left: 36px;
+        }
+        .gun-label-mode-switch .switch-label-left,
+        .gun-label-mode-switch .switch-label-right {
+            display: none;
+        }
+        .generate-btn {
+            grid-column: 1 / -1;
+            width: 100%;
+            padding: 10px;
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .generate-btn:hover {
+            background: #219653;
+        }
+        .check-tip {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-weight: bold;
+            display: none;
+            font-size: 14px;
+        }
+        .check-success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .check-error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .main-content {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .sidebar {
+            width: 300px;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px #ccc;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .sidebar-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sidebar-panel h3 {
+            text-align: center;
+            margin-bottom: 4px;
+            color: #333;
+            font-size: 16px;
+        }
+        .sidebar-panel p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .sidebar-panel span {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .symmetry-tip {
+            color: #2196F3;
+            font-weight: bold;
+            margin-top: 4px;
+            display: block;
+            font-size: 14px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+        .stat-item span {
+            color: #e74c3c;
+        }
+        .gap-scheme-item {
+            font-size: 13px;
+            color: #856404;
+            background: #fff3cd;
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        .plot-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .plot-container {
+            width: 100%;
+            overflow: visible !important;
+            max-height: 70vh;
+            padding: 20px 40px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px #ccc;
+            position: relative;
+        }
+        .screenshot-wrapper {
+            position: relative;
+            margin: 0 auto;
+            display: inline-block;
+            margin-left: 100px;
+            margin-top: 20px;
+            margin-bottom: 100px;
+            margin-right: 50px;
+        }
+        .plot-outer {
+            position: relative;
+            transform-origin: center center;
+            transition: transform 0.2s ease;
+            cursor: grab;
+            border-radius: 8px;
+        }
+        .plot-outer.grabbing {
+            cursor: grabbing;
+        }
+        #plot {
+            border: 2px solid #000;
+            background: #ffffff;
+            position: relative;
+            overflow: visible;
+        }
+        #plot.gun-label-gap .gun-distance-text {
+            display: none;
+        }
+        #plot.gun-label-distance .gun-gap-text {
+            display: none;
+        }
+        .gun-gap-text {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            background: #e3f2fd;
+            color: #1976D2;
+            padding: 1px 3px;
+            border: 1px solid #2196F3;
+            border-radius: 3px;
+            z-index: 3;
+            left: calc(100% + 6px);
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+        }
+        .gun-distance-text {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            background: #fff;
+            padding: 1px 3px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            z-index: 3;
+            left: calc(100% + 6px);
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+        }
+        .col-side-gap-label {
+            position: absolute;
+            font-size: 11px;
+            font-weight: bold;
+            background: #fff3cd;
+            color: #d69e00;
+            padding: 2px 6px;
+            border: 1px solid #ffa726;
+            border-radius: 3px;
+            white-space: nowrap;
+            z-index: 100;
+            bottom: -20px;
+            transform: translateX(-50%);
+            display: block !important;
+        }
+        .split-line-label {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            background: #fff3cd;
+            color: #d69e00;
+            padding: 2px 4px;
+            border: 1px solid #ffa726;
+            border-radius: 3px;
+            white-space: nowrap;
+            z-index: 96;
+            transform: translateX(-50%);
+            display: block !important;
+        }
+        .download-option {
+            position: fixed;
+            top: 50%;
+            right: 80px;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            width: 280px;
+        }
+        .download-option.show {
+            display: flex;
+        }
+        .right-tool-group {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 9999;
+            background: rgba(255,255,255,0.95);
+            padding: 8px;
+            border-radius: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .setting-tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2196F3;
+            border: 1px solid #2196F3;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+        }
+        .setting-tool-btn:hover {
+            background: #1976D2;
+        }
+        .map-tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+        }
+        .map-tool-btn:hover {
+            background: #f5f5f5;
+        }
+        .total-length-label {
+            position: absolute;
+            left: -80px;
+            top: 50%;
+            transform: translateY(-50%) rotate(90deg);
+            transform-origin: center center;
+            font-size: 12px;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 3px 6px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 99;
+        }
+        .bottom-width-label {
+            position: absolute;
+            bottom: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 1px 6px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 99;
+        }
+        .plot-position-label {
+            position: absolute;
+            left: -100px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 3px 6px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 99;
+            display: none;
+        }
+        .plot-position-label.head {
+            bottom: 8px;
+        }
+        .plot-position-label.tail {
+            top: 8px;
+        }
+        .plot-width-label {
+            position: absolute;
+            right: -50px;
+            bottom: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 3px 6px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 99;
+            display: none;
+        }
+        .col-top-group {
+            position: absolute;
+            top: 60px;
+            left: -150px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 98;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .col-gun-label {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            white-space: nowrap;
+            background-color: #f0f8ff;
+            width: max-content;
+        }
+        .col-total-label {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border: 1px solid #e74c3c;
+            border-radius: 3px;
+            white-space: nowrap;
+            background-color: #ffebee;
+            width: max-content;
+            margin-top: 2px;
+        }
+        .plot-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .split-line {
+            position: absolute;
+            height: 3px;
+            background: #ff0000;
+            z-index: 95;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            display: block !important;
+            width: 100%;
+        }
+        .split-line.symmetry {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .split-line.symmetry::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            background: #ff4444;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .split-line.normal {
+            bottom: 0;
+            top: auto;
+            transform: none;
+        }
+        .tail-bottom-label {
+            position: absolute;
+            right: -50px;
+            bottom: 30px;
+            font-size: 12px;
+            background: #fff9c4;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            z-index: 95;
+            display: block;
+        }
+        .tail-top-label {
+            position: absolute;
+            right: -50px;
+            top: 8px;
+            font-size: 12px;
+            background: #fff9c4;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            z-index: 95;
+            display: block;
+        }
+        .block-length-label {
+            position: absolute;
+            left: -120px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #e8f5e9;
+            padding: 3px 6px;
+            border: 2px solid #4caf50;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 100;
+            transform: rotate(90deg);
+        }
+        .block-length-label.upper {
+            top: 25%;
+        }
+        .block-length-label.lower {
+            top: 75%;
+        }
+        .end-mark-label {
+            position: absolute;
+            right: -60px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #fff3e0;
+            padding: 2px 4px;
+            border: 1px solid #ff9800;
+            border-radius: 3px;
+            z-index: 97;
+            width: 40px;
+            text-align: center;
+        }
+        .end-mark-label.head {
+            bottom: 8px;
+        }
+        .end-mark-label.tail {
+            top: 8px;
+        }
+        .cover-circle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px dashed #999;
+            border-radius: 50%;
+            display: block;
+            z-index: 1;
+            opacity: 0.6;
+        }
+        .sprinkler {
+            width: 8px;
+            height: 8px;
+            background: #e74c3c;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            border: 1px solid #c0392b;
+        }
+        .pipe {
+            width: 2px;
+            height: 100%;
+            background: #34495e;
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        .pipe.even {
+            background: #9b59b6;
+        }
+        .layout-mode-container {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .layout-mode-container label {
+            font-size: 14px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .layout-mode-container select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        /* 顶部喷枪数不匹配报错条 */
+        .gun-mismatch-error {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px;
+            background: #dc3545;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 99999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none;
+        }
+        /* 标签页美化样式 */
+        .tab-item {
+            transition: all 0.2s ease;
+        }
+        .tab-item:hover:not(.active) {
+            background: #f1f5f9;
+            color: #2196F3;
+        }
+        .tab-item.active {
+            border-bottom: 2px solid #2196F3;
+            background: #f0f8ff !important;
+        }
+        /* 弹窗美化样式 */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+        /* 按钮hover效果 */
+        #clearHistoryBtn:hover {
+            background: #b91c1c;
+        }
+        #downloadBtnInPanel:hover {
+            background: #45a049;
+        }
+        #confirmClearBtn:hover {
+            background: #b91c1c;
+        }
+        #cancelClearBtn:hover {
+            background: #e2e8f0;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- 顶部报错条DOM -->
+    <div class="gun-mismatch-error" id="gunMismatchError">❌ 喷枪数不匹配！计算值与实际布局值不一致，请检查参数</div>
+    
+    <div class="config-panel">
+        <h3>灌溉布局计算器-奇偶列专属版（优化完整版）</h3>
+        <div class="config-grid">
+            <div class="config-item">
+                <label for="plotLength">地块长度X(米)</label>
+                <input type="number" id="plotLength" value="200" min="20">
+            </div>
+            <div class="config-item">
+                <label for="plotWidth">地块宽度(米)</label>
+                <input type="number" id="plotWidth" value="48" min="10">
+            </div>
+            <div class="config-item">
+                <label for="nozzleType">喷头类型</label>
+                <select id="nozzleType">
+                    <option value="fourMouth">四嘴喷头（半径8米，直径16米）</option>
+                    <option value="sand">防沙喷头（半径5米，直径10米）</option>
+                    <option value="custom">自定义喷头</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <label for="colStartDistance">第一列固定距离(米)</label>
+                <input type="number" id="colStartDistance" value="8" min="1" disabled>
+            </div>
+            <div class="config-item">
+                <label for="startDistance">第一杆喷枪离地头距离(米)</label>
+                <input type="number" id="startDistance" value="8" min="1" disabled>
+            </div>
+            <div class="config-item">
+                <label for="colGap">最优列间距(米)</label>
+                <input type="number" id="colGap" value="16" min="5" disabled>
+            </div>
+            <div class="config-item">
+                <label for="coverRadius">覆盖半径(米)</label>
+                <input type="number" id="coverRadius" value="8" min="1" disabled>
+            </div>
+            <div class="config-item">
+                <label for="gunDiameter">相邻喷枪间距(米)</label>
+                <input type="number" id="gunDiameter" value="16" min="5" disabled>
+            </div>
+            <div class="config-item">
+                <label for="offsetEven">偶数列错位(米)</label>
+                <input type="number" id="offsetEven" value="8" min="0" disabled>
+            </div>
+            <div class="switch-container" for="radiusSwitch">
+                <span class="switch-label">显示喷枪覆盖半径</span>
+                <input type="checkbox" id="radiusSwitch" class="switch-input" checked>
+                <span class="switch-box"></span>
+            </div>
+            <div class="switch-container" for="colGapShowSwitch">
+                <span class="switch-label">显示列间距&边距米数</span>
+                <input type="checkbox" id="colGapShowSwitch" class="switch-input" checked>
+                <span class="switch-box"></span>
+            </div>
+            <div class="gun-label-mode-switch" id="gunLabelModeContainer">
+                <span>喷枪标注显示：</span>
+                <div class="mode-text-wrap">
+                    <span class="mode-text gap-mode active" id="gapModeText">间距标注</span>
+                    <span class="mode-text distance-mode" id="distanceModeText">距离标注</span>
+                </div>
+                <div class="mode-switch-wrap">
+                    <input type="checkbox" id="gunLabelModeSwitch" class="switch-input">
+                    <span class="switch-box"></span>
+                </div>
+            </div>
+            <div class="layout-mode-container">
+                <label for="layoutMode">布局计算模式：</label>
+                <select id="layoutMode">
+                    <option value="original">原模式（尾数判断列数）</option>
+                    <option value="optimal">优先最优列间距（左侧缩小）</option>
+                </select>
+            </div>
+            <div class="check-tip" id="checkTip">✅ 数据核对成功</div>
+            <button class="generate-btn" id="generateBtn">生成布局</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="sidebar-panel">
+                <h3>布局计算结果</h3>
+                <p>地块长度计算：<span id="calcResult">200 ÷ 16 = 12.500</span></p>
+                <p>奇数列每列喷枪数：<span id="oddColGunNum">13</span>杆</p>
+                <p>偶数列每列喷枪数：<span id="evenColGunNum">13</span>杆</p>
+                <p>地块宽度(输入)：<span id="widthInput">48</span>米 | 左右固定边距：<span id="sideGapFixed">8</span>米/侧</p>
+                <p>中间可分配宽度：<span id="middleWidth">32</span>米 | 实际列间距：<span id="colGapActual">16</span>米</p>
+                <p>本次列数计算：<span id="colCalc">32 ÷ 16 = 2.00 → 3列（固定）</span></p>
+                <p class="gap-scheme-item" id="gapSchemeTip">间距方案：16米、16米（无需调整）</p>
+                <span class="symmetry-tip" id="symmetryTip">当前长度200米≤240米，下方红线为地头，上方为地尾</span>
+            </div>
+            <div class="sidebar-panel">
+                <h3>布局统计</h3>
+                <div class="stat-item">
+                    <span>支管列数：</span>
+                    <span id="pipeCount">3</span>
+                </div>
+                <div class="stat-item">
+                    <span>奇数列数/每列喷枪数：</span>
+                    <span id="oddPipeGun">2 / 13</span>
+                </div>
+                <div class="stat-item">
+                    <span>偶数列数/每列喷枪数：</span>
+                    <span id="evenPipeGun">1 / 13</span>
+                </div>
+                <div class="stat-item">
+                    <span>喷枪覆盖半径：</span>
+                    <span id="radiusText">8</span>米
+                </div>
+                <div class="stat-item">
+                    <span>计算总喷枪数：</span>
+                    <span id="calcTotalGun">39</span>
+                </div>
+                <div class="stat-item">
+                    <span>布局图实际喷枪数：</span>
+                    <span id="plotTotalGun">39</span>
+                </div>
+            </div>
+        </div>
+        <div class="plot-wrap">
+            <div class="plot-container" id="plotContainer">
+                <!-- 美化后的设置面板+历史记录（默认隐藏） -->
+<div class="download-option" id="downloadOption" style="display: none;">
+                    <!-- 标签页切换 -->
+                    <div style="display: flex; gap: 2px; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                        <div class="tab-item active" data-tab="download" style="flex: 1; text-align: center; padding: 6px 0; cursor: pointer; font-weight: 600; color: #2196F3; border-radius: 4px 4px 0 0; background: #f8f9fa;">下载布局图</div>
+                        <div class="tab-item" data-tab="history" style="flex: 1; text-align: center; padding: 6px 0; cursor: pointer; color: #666; border-radius: 4px 4px 0 0; transition: all 0.2s;">历史记录</div>
+                    </div>
+
+                    <!-- 下载标签页 -->
+                    <div class="tab-content" data-tab="download" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="imgFormat" style="font-size: 12px; color: #666;">下载格式</label>
+                            <select id="imgFormat" style="padding: 7px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                                <option value="png">PNG (无损清晰)</option>
+                                <option value="jpg">JPG (体积更小)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="imgQuality" style="font-size: 12px; color: #666;">图片质量 (0.1-1.0)</label>
+                            <input type="number" id="imgQuality" value="1.0" min="0.1" max="1.0" step="0.1" style="padding: 7px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                        </div>
+                        <button class="download-btn-in-panel" id="downloadBtnInPanel" style="padding: 8px; font-size: 13px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor: pointer;">下载布局图</button>
+                    </div>
+
+                    <!-- 历史记录标签页 -->
+                    <div class="tab-content" data-tab="history" style="display: none; flex-direction: column; gap: 10px;">
+                        <div style="max-height: 130px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 8px; background: #fafafa;">
+                            <div class="history-list" id="historyList"></div>
+                        </div>
+                        <button class="download-btn-in-panel" id="clearHistoryBtn" style="padding: 8px; font-size: 13px; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s;">清空历史记录</button>
+                    </div>
+                </div>
+
+                <!-- 清空确认弹窗 -->
+                <div class="modal-mask" id="clearModal">
+                    <div class="box" style="max-width: 320px; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 12px; font-size: 16px; color: #2c3e50; text-align: center;">确认清空历史记录？</h3>
+                        <p style="color: #666; margin-bottom: 18px; font-size: 13px; text-align: center; line-height: 1.5;">此操作不可恢复，所有历史记录将永久删除</p>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn" id="confirmClearBtn" style="flex: 1; padding: 9px; margin: 0; font-size: 14px; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer;">确认清空</button>
+                            <button class="btn" id="cancelClearBtn" style="flex: 1; padding: 9px; margin: 0; font-size: 14px; background: #f1f5f9; color: #2c3e50; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-tool-group">
+                    <div class="map-tool-btn" id="zoomInBtn">+</div>
+                    <div class="map-tool-btn" id="zoomOutBtn">-</div>
+                    <div class="map-tool-btn" id="centerBtn">◎</div>
+                    <div class="setting-tool-btn" id="settingBtn">⚙️</div>
+                </div>
+                <div class="screenshot-wrapper" id="screenshotWrapper">
+                    <div class="plot-outer" id="plotOuter">
+                        <div class="total-length-label" id="totalLengthLabel">总长度：200米</div>
+                        <div class="plot-position-label head" id="plotHeadLabel">地头</div>
+                        <div class="plot-position-label tail" id="plotTailLabel">地尾</div>
+                        <div class="plot-width-label" id="plotWidthLabel">地块宽度：48米</div>
+                        <div class="bottom-width-label" id="bottomWidthLabel">地块宽度：48米</div>
+                        <div class="col-top-group" id="colTopGroup">
+                            <div class="col-gun-label" id="oddColLabel">奇数：0列 | 每列0杆</div>
+                            <div class="col-gun-label" id="evenColLabel">偶数：0列 | 每列0杆</div>
+                            <div class="col-total-label" id="colTotalLabel">总计：0列 | 共0杆</div>
+                        </div>
+                        <div class="plot-wrapper" id="plotWrapper">
+                            <div class="split-line" id="splitLine"></div>
+                            <div class="tail-top-label" id="topTailLabel">地尾（上方）</div>
+                            <div class="tail-bottom-label" id="bottomHeadLabel">地头（下方）</div>
+                            <div class="end-mark-container" id="endMarkContainer"></div>
+                            <div class="block-length-container" id="blockLengthContainer"></div>
+                            <div id="plot" class="show-radius gun-label-gap"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="download-tip" id="downloadTip"></div>
+        <script>
+        // 初始化DOM元素引用
+        const el = {
+            gunMismatchError: document.getElementById('gunMismatchError'),
+            plotLength: document.getElementById('plotLength'),
+            plotWidth: document.getElementById('plotWidth'),
+            nozzleType: document.getElementById('nozzleType'),
+            colStartDistance: document.getElementById('colStartDistance'),
+            startDistance: document.getElementById('startDistance'),
+            colGap: document.getElementById('colGap'),
+            coverRadius: document.getElementById('coverRadius'),
+            gunDiameter: document.getElementById('gunDiameter'),
+            offsetEven: document.getElementById('offsetEven'),
+            radiusSwitch: document.getElementById('radiusSwitch'),
+            colGapShowSwitch: document.getElementById('colGapShowSwitch'),
+            gunLabelModeSwitch: document.getElementById('gunLabelModeSwitch'),
+            gunLabelModeContainer: document.getElementById('gunLabelModeContainer'),
+            gapModeText: document.getElementById('gapModeText'),
+            distanceModeText: document.getElementById('distanceModeText'),
+            generateBtn: document.getElementById('generateBtn'),
+            checkTip: document.getElementById('checkTip'),
+            zoomInBtn: document.getElementById('zoomInBtn'),
+            zoomOutBtn: document.getElementById('zoomOutBtn'),
+            centerBtn: document.getElementById('centerBtn'),
+            plotContainer: document.getElementById('plotContainer'),
+            plot: document.getElementById('plot'),
+            plotWrapper: document.getElementById('plotWrapper'),
+            plotOuter: document.getElementById('plotOuter'),
+            splitLine: document.getElementById('splitLine'),
+            totalLengthLabel: document.getElementById('totalLengthLabel'),
+            plotHeadLabel: document.getElementById('plotHeadLabel'),
+            plotTailLabel: document.getElementById('plotTailLabel'),
+            plotWidthLabel: document.getElementById('plotWidthLabel'),
+            bottomWidthLabel: document.getElementById('bottomWidthLabel'),
+            topTailLabel: document.getElementById('topTailLabel'),
+            bottomHeadLabel: document.getElementById('bottomHeadLabel'),
+            colTopGroup: document.getElementById('colTopGroup'),
+            oddColLabel: document.getElementById('oddColLabel'),
+            evenColLabel: document.getElementById('evenColLabel'),
+            colTotalLabel: document.getElementById('colTotalLabel'),
+            calcResult: document.getElementById('calcResult'),
+            oddColGunNum: document.getElementById('oddColGunNum'),
+            evenColGunNum: document.getElementById('evenColGunNum'),
+            widthInput: document.getElementById('widthInput'),
+            sideGapFixed: document.getElementById('sideGapFixed'),
+            middleWidth: document.getElementById('middleWidth'),
+            colGapActual: document.getElementById('colGapActual'),
+            colCalc: document.getElementById('colCalc'),
+            symmetryTip: document.getElementById('symmetryTip'),
+            pipeCount: document.getElementById('pipeCount'),
+            oddPipeGun: document.getElementById('oddPipeGun'),
+            evenPipeGun: document.getElementById('evenPipeGun'),
+            radiusText: document.getElementById('radiusText'),
+            calcTotalGun: document.getElementById('calcTotalGun'),
+            plotTotalGun: document.getElementById('plotTotalGun'),
+            downloadTip: document.getElementById('downloadTip'),
+            imgFormat: document.getElementById('imgFormat'),
+            imgQuality: document.getElementById('imgQuality'),
+            screenshotWrapper: document.getElementById('screenshotWrapper'),
+            settingBtn: document.getElementById('settingBtn'),
+            downloadOption: document.getElementById('downloadOption'),
+            downloadBtnInPanel: document.getElementById('downloadBtnInPanel'),
+            gapSchemeTip: document.getElementById('gapSchemeTip'),
+            endMarkContainer: document.getElementById('endMarkContainer'),
+            blockLengthContainer: document.getElementById('blockLengthContainer'),
+            layoutMode: document.getElementById('layoutMode'),
+            // 历史记录相关DOM
+            tabItems: document.querySelectorAll('.tab-item'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            historyList: document.getElementById('historyList'),
+            clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+            clearModal: document.getElementById('clearModal'),
+            confirmClearBtn: document.getElementById('confirmClearBtn'),
+            cancelClearBtn: document.getElementById('cancelClearBtn')
+        };
+        // 常量定义
+        const PX_PER_M = 5;
+        const nozzleConfig = {
+            fourMouth: { 
+                colStart: 8,
+                start: 8,
+                coverRadius: 8,
+                gunGap: 16,
+                offsetEven: 8,
+                sideGapPer: 8,
+                firstGunTip: 8
+            },
+            sand: { 
+                colStart: 5,
+                start: 5,
+                coverRadius: 5,
+                gunGap: 10,
+                offsetEven: 5,
+                sideGapPer: 5,
+                firstGunTip: 5
+            },
+            custom: {
+                colStart: 0,
+                start: 0,
+                coverRadius: 0,
+                gunGap: 0,
+                offsetEven: 0,
+                sideGapPer: 0,
+                firstGunTip: 0
+            }
+        };
+        // 全局变量
+let scale = 1;
+const scaleStep = 0.1;
+const minScale = 0.5;
+const maxScale = 2;
+let isDragging = false;
+let startX, startY;
+let offsetX = 0, offsetY = 0;
+let touchStartDistance = 0;
+// ==============================================
+// 新增功能：仅长宽输入框按回车 = 点击生成按钮，其他地方回车无效
+// ==============================================
+function initEnterGenerateOnlyInSizeInputs() {
+    // 1. 获取关键元素
+    const lengthInput = document.getElementById('plotLength');
+    const widthInput = document.getElementById('plotWidth');
+    const generateBtn = document.getElementById('generateBtn');
+
+    // 2. 仅长宽输入框按回车 → 触发生成布局
+    [lengthInput, widthInput].forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 阻止默认行为（如表单提交）
+                generateBtn.click(); // 模拟点击生成按钮
+            }
+        });
+    });
+
+    // 3. 全局阻止其他地方的回车事件（关键！）
+    document.addEventListener('keydown', function(e) {
+        // 只有当前焦点不在长宽输入框时，才阻止回车
+        const activeElement = document.activeElement;
+        if (e.key === 'Enter' && activeElement !== lengthInput && activeElement !== widthInput) {
+            e.preventDefault(); // 其他地方按回车，不触发任何操作
+        }
+    }, { capture: true }); // capture:true 确保优先拦截全局回车
+}
+
+// ==============================================
+// 调用功能（替换之前的调用，加在页面初始化入口处）
+// ==============================================
+window.addEventListener('load', () => {
+    loadSavedConfig();
+    controlParams(el.nozzleType.value === 'custom');
+    toggleGunLabelMode();
+    renderLayout();
+    initTabSwitch();
+    bindHistoryEvents();
+    initEnterGenerateOnlyInSizeInputs(); // 新增：启用仅长宽输入框回车生成
+});
+
+// ========== 新增：保存配置函数 ==========
+function saveCurrentConfig() {
+    const config = {
+        plotLength: el.plotLength.value,
+        plotWidth: el.plotWidth.value,
+        nozzleType: el.nozzleType.value,
+        colStartDistance: el.colStartDistance.value,
+        startDistance: el.startDistance.value,
+        colGap: el.colGap.value,
+        coverRadius: el.coverRadius.value,
+        gunDiameter: el.gunDiameter.value,
+        offsetEven: el.offsetEven.value,
+        radiusSwitch: el.radiusSwitch.checked,
+        colGapShowSwitch: el.colGapShowSwitch.checked,
+        gunLabelModeSwitch: el.gunLabelModeSwitch.checked,
+        layoutMode: el.layoutMode.value
+    };
+    localStorage.setItem('savedIrrigationConfig', JSON.stringify(config));
+}
+
+// 新增：加载配置函数
+function loadSavedConfig() {
+    const savedConfig = localStorage.getItem('savedIrrigationConfig');
+    if (!savedConfig) return;
+    
+    const config = JSON.parse(savedConfig);
+    // 恢复输入框值
+    el.plotLength.value = config.plotLength;
+    el.plotWidth.value = config.plotWidth;
+    el.nozzleType.value = config.nozzleType;
+    el.colStartDistance.value = config.colStartDistance;
+    el.startDistance.value = config.startDistance;
+    el.colGap.value = config.colGap;
+    el.coverRadius.value = config.coverRadius;
+    el.gunDiameter.value = config.gunDiameter;
+    el.offsetEven.value = config.offsetEven;
+    // 恢复开关状态
+    el.radiusSwitch.checked = config.radiusSwitch;
+    el.colGapShowSwitch.checked = config.colGapShowSwitch;
+    el.gunLabelModeSwitch.checked = config.gunLabelModeSwitch;
+    // 恢复下拉框状态
+    el.layoutMode.value = config.layoutMode;
+    // 恢复喷枪标注模式
+    toggleGunLabelMode();
+    // 恢复覆盖半径显示状态
+    el.plot.classList.toggle('show-radius', config.radiusSwitch);
+}
+// ========== 新增结束 ==========
+
+// ===================== 标签页切换逻辑 =====================
+function initTabSwitch() {
+            el.tabItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    // 切换标签激活状态
+                    el.tabItems.forEach(i => {
+                        i.classList.toggle('active', i.dataset.tab === tab);
+                        i.style.color = i.dataset.tab === tab ? '#2196F3' : '#666';
+                    });
+                    // 切换内容显示
+                    el.tabContents.forEach(content => {
+                        content.style.display = content.dataset.tab === tab ? 'flex' : 'none';
+                    });
+                    // 切换历史记录时渲染列表
+                    if (tab === 'history') renderHistoryList();
+                });
+            });
+            // 初始化时默认显示下载标签页
+            el.tabContents.forEach(content => {
+                content.style.display = content.dataset.tab === 'download' ? 'flex' : 'none';
+            });
+        }
+
+        // ===================== 历史记录核心逻辑 =====================
+        let layoutHistory = JSON.parse(localStorage.getItem('layoutHistory')) || [];
+        const MAX_HISTORY = 5;
+
+        // 保存历史记录
+        function saveLayoutHistory() {
+            const X = el.plotLength.value;
+            const widthVal = el.plotWidth.value;
+            const nozzleType = el.nozzleType.options[el.nozzleType.selectedIndex].text;
+            const totalGun = el.calcTotalGun.textContent;
+            const timeStr = new Date().toLocaleString('zh-CN', { 
+                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
+            });
+
+            // 去重
+            const newRecord = { X, widthVal, nozzleType, totalGun, timeStr };
+            layoutHistory = layoutHistory.filter(item => 
+                !(item.X === X && item.widthVal === widthVal && item.nozzleType === nozzleType)
+            );
+            layoutHistory.unshift(newRecord);
+            if (layoutHistory.length > MAX_HISTORY) layoutHistory.pop();
+
+            localStorage.setItem('layoutHistory', JSON.stringify(layoutHistory));
+        }
+
+        // 渲染历史记录
+        function renderHistoryList() {
+            if (layoutHistory.length === 0) {
+                el.historyList.innerHTML = '<p style="text-align: center; padding: 15px 0; color: #888; font-size: 13px; margin: 0;">暂无历史记录</p>';
+                return;
+            }
+
+            let html = '';
+            layoutHistory.forEach((item, idx) => {
+                html += `<div style="padding: 8px; margin-bottom: 6px; border-radius: 4px; background: #fff; border: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s;" data-index="${idx}">
+                <p style="font-size: 12px; line-height: 1.4; color: #333; margin: 0;">
+                    <span style="color: #2196F3; font-weight: 500;">${item.X}×${item.widthVal}m</span> | 
+                    <span style="color: #666;">${item.nozzleType}</span>
+                </p>
+                <p style="font-size: 11px; color: #999; margin: 4px 0 0 0;">
+                    喷枪${item.totalGun}支 · ${item.timeStr}
+                </p>
+            </div>`;
+            });
+            el.historyList.innerHTML = html;
+
+            // 绑定加载事件+hover效果
+            document.querySelectorAll('[data-index]').forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    item.style.background = '#f5fafe';
+                    item.style.borderColor = '#e3f2fd';
+                });
+                item.addEventListener('mouseleave', () => {
+                    item.style.background = '#fff';
+                    item.style.borderColor = '#f0f0f0';
+                });
+                item.addEventListener('click', function() {
+                    loadHistory(this.dataset.index);
+                });
+            });
+        }
+
+        // 加载历史记录
+        function loadHistory(idx) {
+            const item = layoutHistory[idx];
+            el.plotLength.value = item.X;
+            el.plotWidth.value = item.widthVal;
+            
+            // 切换喷头类型
+            const typeMap = {
+                '四嘴喷头（半径8米，直径16米）': 'fourMouth',
+                '防沙喷头（半径5米，直径10米）': 'sand',
+                '自定义喷头': 'custom'
+            };
+            el.nozzleType.value = typeMap[item.nozzleType] || 'fourMouth';
+            el.nozzleType.dispatchEvent(new Event('change'));
+
+            renderLayout();
+            el.downloadOption.classList.remove('show'); // 关闭设置面板
+        }
+
+        // 清空历史记录相关
+        function showClearModal() {
+            if (layoutHistory.length === 0) {
+                alert('无记录可清');
+                return;
+            }
+            el.clearModal.style.display = 'flex';
+        }
+
+        function hideClearModal() {
+            el.clearModal.style.display = 'none';
+        }
+
+        function confirmClear() {
+            layoutHistory = [];
+            localStorage.removeItem('layoutHistory');
+            renderHistoryList();
+            hideClearModal();
+            alert('记录已清空');
+        }
+
+        // ===================== 绑定历史记录事件 =====================
+function bindHistoryEvents() {
+    // 清空历史按钮点击
+    el.clearHistoryBtn.addEventListener('click', showClearModal);
+    // 取消清空
+    el.cancelClearBtn.addEventListener('click', hideClearModal);
+    // 确认清空
+    el.confirmClearBtn.addEventListener('click', confirmClear);
+    // 点击空白关闭弹窗
+    el.clearModal.addEventListener('click', (e) => {
+        if (e.target === el.clearModal) hideClearModal();
+    });
+    // 生成布局时保存历史记录+当前配置
+    el.generateBtn.addEventListener('click', function() {
+        renderLayout();
+        saveLayoutHistory();
+        saveCurrentConfig(); // ========== 新增：保存配置 ==========
+    });
+}
+
+        // ===================== 设置按钮点击事件 =====================
+el.settingBtn.addEventListener('click', () => {
+    const isShow = el.downloadOption.style.display === 'flex';
+    el.downloadOption.style.display = isShow ? 'none' : 'flex';
+    // 显示时默认切换到下载标签页
+    if (!isShow) {
+        el.tabItems.forEach(i => {
+            i.classList.toggle('active', i.dataset.tab === 'download');
+            i.style.color = i.dataset.tab === 'download' ? '#2196F3' : '#666';
+        });
+        el.tabContents.forEach(content => {
+            content.style.display = content.dataset.tab === 'download' ? 'flex' : 'none';
+        });
+    }
+});
+
+        // 设置按钮点击事件（替换原有全部代码）
+        el.downloadBtnInPanel.addEventListener('click', async () => {
+            try {
+                el.downloadBtnInPanel.textContent = '下载中...';
+                el.downloadBtnInPanel.style.pointerEvents = 'none';
+                const format = el.imgFormat.value;
+                const quality = parseFloat(el.imgQuality.value);
+                const oldScale = scale;
+                const oldOffsetX = offsetX;
+                const oldOffsetY = offsetY;
+                scale = 1;
+                offsetX = 0;
+                offsetY = 0;
+                updatePlotTransform();
+                // 生成Canvas（和原来逻辑一致）
+                const canvas = await html2canvas(el.screenshotWrapper, {
+                    scale: 3,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    x: -200,
+                    y: -50,
+                    width: el.screenshotWrapper.offsetWidth + 400,
+                    height: el.screenshotWrapper.offsetHeight + 200
+                });
+                scale = oldScale;
+                offsetX = oldOffsetX;
+                offsetY = oldOffsetY;
+                updatePlotTransform();
+                
+                // 核心修改：用FileSaver保存到DCIM目录（图库可识别）
+                if (format === 'png') {
+                    canvas.toBlob(blob => {
+                        // 保存路径为DCIM/灌溉布局图_时间戳.png，系统图库会扫描
+                        saveAs(blob, `DCIM/灌溉布局图_${new Date().getTime()}.png`);
+                        el.downloadBtnInPanel.textContent = '下载布局图';
+                        el.downloadBtnInPanel.style.pointerEvents = 'auto';
+                        el.downloadTip.textContent = `✅ 截图成功（PNG，已保存到图库）`;
+                        el.downloadTip.style.color = '#155724';
+                        setTimeout(() => el.downloadTip.textContent = '', 3000);
+                    });
+                } else {
+                    canvas.toBlob(blob => {
+                        saveAs(blob, `DCIM/灌溉布局图_${new Date().getTime()}.jpg`, { quality: quality });
+                        el.downloadBtnInPanel.textContent = '下载布局图';
+                        el.downloadBtnInPanel.style.pointerEvents = 'auto';
+                        el.downloadTip.textContent = `✅ 截图成功（JPG，已保存到图库）`;
+                        el.downloadTip.style.color = '#155724';
+                        setTimeout(() => el.downloadTip.textContent = '', 3000);
+                    }, 'image/jpeg', quality);
+                }
+            } catch (error) {
+                console.error('下载失败：', error);
+                el.downloadBtnInPanel.textContent = '下载布局图';
+                el.downloadBtnInPanel.style.pointerEvents = 'auto';
+                el.downloadTip.textContent = '❌ 截图失败，请刷新页面重试';
+                el.downloadTip.style.color = '#721c24';
+                setTimeout(() => el.downloadTip.textContent = '', 3000);
+            }
+        });
+
+        // 控制参数是否可编辑
+        function controlParams(isCustom) {
+            const lockInputs = [el.colStartDistance, el.startDistance, el.colGap, el.coverRadius, el.gunDiameter, el.offsetEven];
+            lockInputs.forEach(input => {
+                input.disabled = !isCustom;
+                input.min = isCustom ? 1 : input.min;
+            });
+        }
+
+        // 原模式：尾数判断列数逻辑
+        function calcPipeAndGapScheme(widthVal, nozzleType) {
+            const config = nozzleConfig[nozzleType];
+            const optimalGap = nozzleType === 'custom' ? Number(el.colGap.value) : (config.coverRadius * 2);
+            const division = widthVal / optimalGap;
+            const quotient = Math.floor(division); 
+            // 只要不是整数，就多1列（核心修改）
+            let colNum;
+            if (Number.isInteger(division)) {
+                colNum = quotient;
+            } else {
+                colNum = quotient + 1;
+            }
+            colNum = colNum < 1 ? 1 : colNum;
+            const sideGapPer = nozzleType === 'custom' ? Number(el.colStartDistance.value) : config.sideGapPer;
+            const middleWidth = widthVal - 2 * sideGapPer;
+            const gapNum = colNum - 1;
+            let gapScheme = [];
+            if (gapNum > 0) {
+                const actualGap = middleWidth / gapNum;
+                gapScheme = new Array(gapNum).fill(actualGap);
+            }
+            const actualColGap = gapNum > 0 ? gapScheme[0] : optimalGap;
+            const adjustDesc = `原模式：间距${gapScheme.length > 0 ? gapScheme.map(g => g.toFixed(1)+'米').join('、') : '无'}（左右边距${sideGapPer}米，中间宽度${middleWidth}米）`;
+            return {
+                colNum: colNum,
+                sideGapPer: sideGapPer,
+                middleWidth: middleWidth,
+                gapNum: gapNum,
+                gapScheme: gapScheme,
+                actualColGap: actualColGap,
+                adjustDesc: adjustDesc,
+                division: division,
+                decimalFirstDigit: Math.floor(((widthVal / optimalGap) - Math.floor(widthVal / optimalGap)) * 10)
+            };
+        }
+
+        // 喷头类型切换事件
+        el.nozzleType.addEventListener('change', function() {
+            const type = this.value;
+            const config = nozzleConfig[type];
+            const isCustom = type === 'custom';
+            controlParams(isCustom);
+            if (!isCustom) {
+                el.colStartDistance.value = config.colStart;
+                el.startDistance.value = config.start;
+                el.colGap.value = config.coverRadius * 2;
+                el.coverRadius.value = config.coverRadius;
+                el.gunDiameter.value = config.gunGap;
+                el.offsetEven.value = config.offsetEven;
+            }
+            renderLayout();
+        });
+
+        // 开关容器点击事件
+        document.querySelectorAll('.switch-container').forEach(container => {
+            container.addEventListener('click', function(e) {
+                const input = this.querySelector('.switch-input');
+                if (input) {
+                    input.checked = !input.checked;
+                    if (input.id === 'radiusSwitch') {
+                        el.plot.classList.toggle('show-radius', input.checked);
+                    }
+                    renderLayout();
+                }
+            });
+        });
+
+        // 喷枪标注模式切换事件
+        el.gunLabelModeContainer.addEventListener('click', function() {
+            el.gunLabelModeSwitch.checked = !el.gunLabelModeSwitch.checked;
+            toggleGunLabelMode();
+            renderLayout();
+        });
+        el.gunLabelModeSwitch.addEventListener('change', function() {
+            toggleGunLabelMode();
+            renderLayout();
+        });
+
+        // 切换喷枪标注模式
+        function toggleGunLabelMode() {
+            if (el.gunLabelModeSwitch.checked) {
+                el.plot.classList.remove('gun-label-gap');
+                el.plot.classList.add('gun-label-distance');
+                el.gapModeText.classList.remove('active');
+                el.distanceModeText.classList.add('active');
+            } else {
+                el.plot.classList.remove('gun-label-distance');
+                el.plot.classList.add('gun-label-gap');
+                el.gapModeText.classList.add('active');
+                el.distanceModeText.classList.remove('active');
+            }
+        }
+
+        // 更新绘图区域变换
+        function updatePlotTransform() {
+            el.plotOuter.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        }
+
+        // 更新缩放比例
+        function updateScale(newScale) {
+            scale = Math.max(minScale, Math.min(maxScale, newScale));
+            updatePlotTransform();
+        }
+
+        // 放大按钮事件
+        el.zoomInBtn.addEventListener('click', () => {
+            updateScale(scale + scaleStep);
+        });
+
+        // 缩小按钮事件
+        el.zoomOutBtn.addEventListener('click', () => {
+            updateScale(scale - scaleStep);
+        });
+
+        // 居中按钮事件
+        el.centerBtn.addEventListener('click', () => {
+            offsetX = 0;
+            offsetY = 0;
+            scale = 1;
+            updatePlotTransform();
+        });
+
+        // 鼠标拖拽事件
+        el.plotOuter.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            el.plotOuter.classList.add('grabbing');
+            startX = e.clientX - offsetX;
+            startY = e.clientY - offsetY;
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            offsetX = e.clientX - startX;
+            offsetY = e.clientY - startY;
+            updatePlotTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            el.plotOuter.classList.remove('grabbing');
+        });
+
+        // 触摸拖拽事件
+        el.plotOuter.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - offsetX;
+                startY = e.touches[0].clientY - offsetY;
+            }
+        }, { passive: true });
+
+        el.plotOuter.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                e.preventDefault();
+                offsetX = e.touches[0].clientX - startX;
+                offsetY = e.touches[0].clientY - startY;
+                updatePlotTransform();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // 触摸缩放事件
+        el.plotOuter.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                const x1 = e.touches[0].clientX;
+                const y1 = e.touches[0].clientY;
+                const x2 = e.touches[1].clientX;
+                const y2 = e.touches[1].clientY;
+                touchStartDistance = Math.hypot(x2 - x1, y2 - y1);
+            }
+        }, { passive: true });
+
+        // 触摸缩放事件
+el.plotOuter.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        const x1 = e.touches[0].clientX;
+        const y1 = e.touches[0].clientY;
+        const x2 = e.touches[1].clientX;
+        const y2 = e.touches[1].clientY;
+        const touchCurrentDistance = Math.hypot(x2 - x1, y2 - y1);
+        const scaleRatio = touchCurrentDistance / touchStartDistance;
+        touchStartDistance = touchCurrentDistance;
+        updateScale(scale * scaleRatio);
+    }
+}, { passive: false });
+
+// ========== 新增：配置实时保存 ==========
+// 输入框/下拉框变化时，实时保存
+[el.plotLength, el.plotWidth, el.nozzleType, el.colGap, el.layoutMode].forEach(element => {
+    element.addEventListener('change', saveCurrentConfig);
+});
+// 开关变化时，实时保存
+[el.radiusSwitch, el.colGapShowSwitch, el.gunLabelModeSwitch].forEach(switchEl => {
+    switchEl.addEventListener('change', saveCurrentConfig);
+});
+// ========== 新增结束 ==========
+
+// 小数向上取整函数
+function ceilIfDecimal(num) {
+            if (Number.isInteger(num)) {
+                return num;
+            }
+            return Math.ceil(num);
+        }
+
+        // 优先最优模式：左侧缩小逻辑
+        function calcPipeAndGapSchemeOptimal(widthVal, nozzleType) {
+            const nozzleConfigOpt = {
+                fourMouth: { 
+                    sideGapPer: 8,       
+                    coverRadius: 8,      
+                },
+                sand: { 
+                    sideGapPer: 5,       
+                    coverRadius: 5,      
+                },
+                custom: {
+                    sideGapPer: Number(el.colStartDistance.value),
+                    coverRadius: Number(el.coverRadius.value)
+                }
+            };
+            const config = nozzleConfigOpt[nozzleType];
+            const sideGapPer = config.sideGapPer;
+            const optimalGap = nozzleType === 'custom' ? Number(el.colGap.value) : (config.coverRadius * 2);
+            const minGap = sideGapPer; 
+            let colNum = ceilIfDecimal(widthVal / optimalGap);
+            colNum = colNum < 1 ? 1 : colNum;
+            const sideGapTotal = sideGapPer * 2;
+            const middleWidth = Math.max(0, widthVal - sideGapTotal);
+            const gapNum = colNum - 1;
+            let gapScheme = [];
+            let adjustDesc = "";
+            let actualColGap = optimalGap;
+            if (gapNum === 0) {
+                gapScheme = [];
+                adjustDesc = "仅1列支管，无列间距";
+                actualColGap = 0;
+            } else {
+                const optimalTotal = gapNum * optimalGap;
+                const diff = optimalTotal - middleWidth;
+                if (diff <= 0) {
+                    gapScheme = new Array(gapNum).fill(optimalGap);
+                    adjustDesc = `间距方案：${gapScheme.map(g => g.toFixed(1)+'米').join('、')}米（无需调整）`;
+                    actualColGap = optimalGap;
+                } else {
+                    gapScheme = new Array(gapNum).fill(optimalGap);
+                    let remainingDiff = diff;
+                    let adjustCount = 0;
+                    for (let i = 0; i < gapScheme.length && remainingDiff > 0; i++) {
+                        const maxReduce = gapScheme[i] - minGap;
+                        if (maxReduce <= 0) continue;
+                        const reduceVal = Math.min(remainingDiff, maxReduce);
+                        gapScheme[i] -= reduceVal;
+                        remainingDiff -= reduceVal;
+                        adjustCount++;
+                    }
+                    gapScheme = gapScheme.map(g => parseFloat(g.toFixed(1)));
+                    const gapTotal = gapScheme.reduce((a, b) => a + b, 0);
+                    actualColGap = gapNum > 0 ? parseFloat((gapTotal / gapNum).toFixed(1)) : 0;
+                    adjustDesc = `间距方案：${gapScheme.map(g => g.toFixed(1)+'米').join('、')}米（调整${adjustCount}个间距，符合${minGap}米下限）`;
+                }
+            }
+            return {
+                colNum: colNum,
+                sideGapPer: sideGapPer,
+                middleWidth: middleWidth,
+                gapNum: gapNum,
+                gapScheme: gapScheme,
+                actualColGap: actualColGap,
+                adjustDesc: adjustDesc,
+                division: widthVal / optimalGap,
+                decimalFirstDigit: Math.floor(((widthVal / optimalGap) - Math.floor(widthVal / optimalGap)) * 10)
+            };
+        }
+
+        // 关键常量（控制超长地块分块）
+        const SYMMETRY_THRESHOLD = 240; // 地块长度＞240米时，分上下两块计算
+        // 喷枪布局（数量+位置）核心计算函数（最终版：超界离地尾距离=自身覆盖半径）
+        function calcGunLayout(X, gunGap, evenOffset, startDistance, coverRadius) {
+            // 1. 判断是否超长地块（＞240米），超长则分上下两块计算
+            const isSymmetry = X > SYMMETRY_THRESHOLD; 
+            const halfX = isSymmetry ? X / 2 : X; // 单块计算长度（地尾位置=halfX）
+            const tailGap = coverRadius; // 核心：离地尾距离=覆盖半径（四嘴8米，防沙5米，自定义=输入值）
+            
+            // 2. 基础比例计算（用于判断小数部分，决定喷枪数量）
+            const division = halfX / gunGap;
+            const decimalStr = division.toString().split('.')[1] || '0'; 
+            const firstDec = parseInt(decimalStr[0] || 0); 
+            
+            // 3. 喷枪数量计算
+            let oddNum, evenNum; 
+            if (firstDec >= 1 && firstDec <= 4) {
+                oddNum = Math.floor(division) + 1;
+                evenNum = Math.floor(division) + 1;
+            } else if (firstDec === 5) {
+                oddNum = Math.floor(division) + 1;
+                evenNum = Math.floor(division) + 1;
+            } else if (firstDec >= 6 && firstDec <= 9) {
+                oddNum = Math.floor(division) + 1;
+                evenNum = Math.floor(division) + 2;
+            } else { 
+                oddNum = Math.floor(division);
+                evenNum = Math.floor(division) + 1;
+            }
+            
+            // 4. 奇数列喷枪位置计算（超界=离地尾距离=覆盖半径）
+            const oddPos = [];
+            for (let i = 0; i < oddNum; i++) {
+                oddPos.push(startDistance + i * gunGap); 
+            }
+            if (oddPos.length > 0) {
+                const lastPos = oddPos[oddPos.length - 1];
+                                // 超界判断：最后一杆位置+覆盖半径 > 地尾（halfX）
+                if (lastPos + coverRadius > halfX) { 
+                    // 强制设置为：地尾位置 - 覆盖半径（防沙5米，四嘴8米）
+                    oddPos[oddPos.length - 1] = halfX - tailGap; 
+                    // 二次校验：确保不小于起始距离（避免贴太前）
+                    if (oddPos[oddPos.length - 1] < startDistance) {
+                        oddPos[oddPos.length - 1] = startDistance;
+                    }
+                }
+            }
+            
+            // 5. 偶数列喷枪位置计算（同奇数列逻辑）
+            const evenPos = [];
+            evenPos.push(startDistance); 
+            for (let i = 1; i < evenNum; i++) {
+                evenPos.push(startDistance + evenOffset + (i - 1) * gunGap); 
+            }
+            if (evenPos.length > 0) {
+                const lastPos = evenPos[evenPos.length - 1];
+                if (lastPos + coverRadius > halfX) { 
+                    evenPos[evenPos.length - 1] = halfX - tailGap; // 离地尾=覆盖半径
+                    if (evenPos[evenPos.length - 1] < startDistance) {
+                        evenPos[evenPos.length - 1] = startDistance;
+                    }
+                }
+            }
+            
+            // 6. 超长分块修正（分块时也按“离地尾=覆盖半径”逻辑）
+            if (isSymmetry) {
+                // 奇数列块尾修正
+                if (oddPos.length > 0) {
+                    const lastPos = oddPos[oddPos.length - 1];
+                    if (lastPos + coverRadius > halfX) {
+                        oddPos[oddPos.length - 1] = halfX - tailGap;
+                        if (oddPos[oddPos.length - 1] < startDistance) {
+                            oddPos[oddPos.length - 1] = startDistance;
+                        }
+                    }
+                }
+                // 偶数列块尾修正
+                if (evenPos.length > 0) {
+                    const lastPos = evenPos[evenPos.length - 1];
+                    if (lastPos + coverRadius > halfX) {
+                        evenPos[evenPos.length - 1] = halfX - tailGap;
+                        if (evenPos[evenPos.length - 1] < startDistance) {
+                            evenPos[evenPos.length - 1] = startDistance;
+                        }
+                    }
+                }
+            }
+            
+            // 7. 边界修正（确保所有喷枪位置合法）
+            const fixPos = pos => Math.max(startDistance, Math.min(pos, halfX - tailGap)); 
+            const fixedOddPos = oddPos.map(fixPos); 
+            const fixedEvenPos = evenPos.map(fixPos); 
+            
+            // 8. 返回结果
+            return {
+                isSymmetry: isSymmetry,
+                halfX: halfX,
+                odd: { num: oddNum, positions: fixedOddPos },
+                even: { num: evenNum, positions: fixedEvenPos },
+                calcStr: isSymmetry ? `${X} ÷ 2 ÷ ${gunGap} = ${division.toFixed(3)}` : `${X} ÷ ${gunGap} = ${division.toFixed(3)}`
+            };
+        }
+
+        // 移除旧长度标签
+        function removeOldLengthLabels() {
+            const oldLabels = document.querySelectorAll('.tail-top-label .length-tag, .tail-bottom-label .length-tag, .gun-gap-text.old-tail-label');
+            oldLabels.forEach(label => label.remove());
+        }
+
+        // 添加分割线标签（仅地块＞240米分块模式生效，同步开关状态）
+function addSplitLineLabels(plotWidth, sideGapPer, gapScheme, isSymmetry) {
+    const showColGap = el.colGapShowSwitch.checked;
+    // 仅当「地块＞240米（isSymmetry=true）」且「开关开启」时，才显示标签
+    if (!isSymmetry || !showColGap) {
+        document.querySelectorAll('.split-line-label').forEach(label => label.remove());
+        return;
+    }
+    // 原有生成分块标签的逻辑（保留不变）
+    document.querySelectorAll('.col-side-gap-label, .split-line-label').forEach(label => label.remove());
+    const splitLine = el.splitLine;
+    const labelPositions = [];
+    const labelValues = [sideGapPer, ...gapScheme, sideGapPer];
+    let totalX = 0;
+    labelValues.forEach((val, idx) => {
+        let xPos = totalX + (val * PX_PER_M) / 2;
+        xPos = Math.max(20, Math.min(plotWidth - 20, xPos));
+        labelPositions.push({ x: xPos, text: `${val.toFixed(1)}米` });
+        if (idx === 0) {
+            totalX += sideGapPer * PX_PER_M;
+        } else if (idx < labelValues.length - 1) {
+            totalX += gapScheme[idx - 1] * PX_PER_M;
+        }
+    });
+    labelPositions.forEach(pos => {
+        const label = document.createElement('div');
+        label.className = 'split-line-label';
+        label.textContent = pos.text;
+        label.style.left = `${pos.x}px`;
+        label.style.top = '-18px';
+        splitLine.appendChild(label);
+    });
+}
+
+        // 添加地块长度标签
+        function addBlockLengthLabels(isSymmetry, halfX) {
+            el.blockLengthContainer.innerHTML = '';
+            if (!isSymmetry) return;
+            const upperLabel = document.createElement('div');
+            upperLabel.className = 'block-length-label upper';
+            upperLabel.textContent = `上地块：${halfX}米`;
+            upperLabel.style.transform = 'none';
+            upperLabel.style.left = '-200px';
+            el.blockLengthContainer.appendChild(upperLabel);
+            const lowerLabel = document.createElement('div');
+            lowerLabel.className = 'block-length-label lower';
+            lowerLabel.textContent = `下地块：${halfX}米`;
+            lowerLabel.style.transform = 'none';
+            lowerLabel.style.left = '-200px';
+            el.blockLengthContainer.appendChild(lowerLabel);
+        }
+
+        // 添加端点标签
+        function addEndMarkLabels(isSymmetry) {
+            el.endMarkContainer.innerHTML = '';
+            if (isSymmetry) {
+                const headLabel = document.createElement('div');
+                headLabel.className = 'end-mark-label head';
+                headLabel.textContent = '地头';
+                headLabel.style.cssText = `
+                    position: absolute;
+                    right: -60px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-size: 12px;
+                    font-weight: bold;
+                    background: #ff4444;
+                    color: #fff;
+                    padding: 2px 4px;
+                    border: 1px solid #cc0000;
+                    border-radius: 3px;
+                    z-index: 97;
+                    width: 40px;
+                    height: 20px;
+                    text-align: center;
+                    line-height: 20px;
+                `;
+                el.endMarkContainer.appendChild(headLabel);
+                const upperTailLabel = document.createElement('div');
+                upperTailLabel.className = 'end-mark-label tail';
+                upperTailLabel.textContent = '地尾';
+                upperTailLabel.style.right = '-60px';
+                upperTailLabel.style.top = '8px';
+                el.endMarkContainer.appendChild(upperTailLabel);
+                const lowerTailLabel = document.createElement('div');
+                lowerTailLabel.className = 'end-mark-label head';
+                lowerTailLabel.textContent = '地尾';
+                lowerTailLabel.style.right = '-60px';
+                lowerTailLabel.style.bottom = '8px';
+                el.endMarkContainer.appendChild(lowerTailLabel);
+            } else {
+                const headLabel = document.createElement('div');
+                headLabel.className = 'end-mark-label head';
+                headLabel.textContent = '地头';
+                headLabel.style.cssText = `
+                    position: absolute;
+                    right: -60px;
+                    bottom: 8px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    background: #ff4444;
+                    color: #fff;
+                    padding: 2px 4px;
+                    border: 1px solid #cc0000;
+                    border-radius: 3px;
+                    z-index: 97;
+                    width: 40px;
+                    height: 20px;
+                    text-align: center;
+                    line-height: 20px;
+                `;
+                el.endMarkContainer.appendChild(headLabel);
+                const tailLabel = document.createElement('div');
+                tailLabel.className = 'end-mark-label tail';
+                tailLabel.textContent = '地尾';
+                tailLabel.style.right = '-60px';
+                tailLabel.style.top = '8px';
+                el.endMarkContainer.appendChild(tailLabel);
+                el.topTailLabel.style.display = 'none';
+                el.bottomHeadLabel.style.display = 'none';
+            }
+            el.plotHeadLabel.style.display = 'none';
+            el.plotTailLabel.style.display = 'none';
+        }
+
+        // 绘制喷枪（同步你的布局逻辑+标签显示）
+        function drawGun(pipeX, y, pos, coverRadius, isEvenPipe, gunIndex, isBottomPart = false, isSymmetry, plotHeight, firstGunTipVal, gunGapVal, evenOffset, startDistance, gunPositions) {
+            const pipeContainer = document.createElement('div');
+            pipeContainer.style.position = 'absolute';
+            pipeContainer.style.left = `${pipeX}px`;
+            pipeContainer.style.top = '0';
+            pipeContainer.style.height = '100%';
+            pipeContainer.dataset.even = isEvenPipe;
+            el.plot.appendChild(pipeContainer);
+            const pipe = document.createElement('div');
+            pipe.className = isEvenPipe ? 'pipe even' : 'pipe';
+            pipe.style.zIndex = '0';
+            pipeContainer.appendChild(pipe);
+            const gunWrap = document.createElement('div');
+            gunWrap.className = 'gun-wrap';
+            gunWrap.style.position = 'absolute';
+            gunWrap.style.left = '50%';
+            gunWrap.style.transform = 'translateX(-50%)';
+            let finalY;
+            if (!isSymmetry) {
+                finalY = plotHeight - y;
+            } else {
+                if (isBottomPart) {
+                    finalY = (plotHeight / 2) + y;
+                } else {
+                    finalY = (plotHeight / 2) - y;
+                }
+            }
+            gunWrap.style.top = `${finalY}px`;
+            pipeContainer.appendChild(gunWrap);
+            if (el.radiusSwitch.checked) {
+                const circle = document.createElement('div');
+                circle.className = 'cover-circle';
+                const circleSize = coverRadius * 2;
+                circle.style.width = `${circleSize}px`;
+                circle.style.height = `${circleSize}px`;
+                circle.style.transform = 'translate(-50%, -50%)';
+                gunWrap.appendChild(circle);
+            }
+            const gun = document.createElement('div');
+            gun.className = 'sprinkler';
+            gunWrap.appendChild(gun);
+            const gapText = document.createElement('div');
+            gapText.className = 'gun-gap-text';
+            // 间距标签：取当前枪与前一枪的实际位置差
+            let gapTipText = '';
+            if (gunIndex === 0) {
+                gapTipText = `${firstGunTipVal}米`;
+            } else {
+                const prevPos = gunPositions[gunIndex - 1];
+                const actualGap = pos - prevPos;
+                gapTipText = `${actualGap.toFixed(1)}米`;
+            }
+            gapText.textContent = gapTipText;
+            gapText.style.left = `${pipeX + 6}px`;
+            gapText.style.top = `${finalY}px`;
+            el.plot.appendChild(gapText);
+            const distanceText = document.createElement('div');
+            distanceText.className = 'gun-distance-text';
+            // 距离标签：直接使用修正后的实际位置pos
+            const distanceVal = pos; 
+            distanceText.textContent = `${distanceVal.toFixed(1)}米`;
+            distanceText.style.left = `${pipeX + 6}px`;
+            distanceText.style.top = `${finalY}px`;
+            el.plot.appendChild(distanceText);
+            return 1;
+        }
+
+        // 核心渲染函数（整合你的calcGunLayout逻辑）
+        function renderLayout() {
+            el.plot.innerHTML = '';
+            document.querySelectorAll('.col-side-gap-label, .split-line-label').forEach(label => label.remove());
+            removeOldLengthLabels();
+            const X = Number(el.plotLength.value);
+            const widthVal = Number(el.plotWidth.value);
+            const nozzleType = el.nozzleType.value;
+            const layoutMode = el.layoutMode.value;
+            const config = nozzleConfig[nozzleType];
+            const radiusVal = nozzleType === 'custom' ? Number(el.coverRadius.value) : config.coverRadius;
+            const evenOffset = nozzleType === 'custom' ? Number(el.offsetEven.value) : config.offsetEven;
+            const gunGapVal = nozzleType === 'custom' ? Number(el.gunDiameter.value) : config.gunGap;
+            const startDistance = nozzleType === 'custom' ? Number(el.startDistance.value) : config.start;
+            const firstGunTipVal = nozzleType === 'custom' ? Number(el.startDistance.value) : config.firstGunTip;
+            const coverRadius = radiusVal * PX_PER_M;
+            const showColGap = el.colGapShowSwitch.checked;
+            const gunLayout = calcGunLayout(X, gunGapVal, evenOffset, startDistance, radiusVal);
+            const { isSymmetry, halfX, odd: oddGun, even: evenGun, calcStr } = gunLayout;
+            const plotHeight = X * PX_PER_M;
+            const plotWidth = widthVal * PX_PER_M;
+            let pipeGapResult;
+            // 选择布局计算模式
+            if (layoutMode === 'original') {
+                pipeGapResult = calcPipeAndGapScheme(widthVal, nozzleType);
+                pipeGapResult.gapScheme = pipeGapResult.gapScheme.map(g => parseFloat(g.toFixed(1)));
+                pipeGapResult.adjustDesc = `原模式：间距${pipeGapResult.gapScheme.length > 0 ? pipeGapResult.gapScheme.map(g => g.toFixed(1)+'米').join('、') : '无'}（左右边距${pipeGapResult.sideGapPer}米，中间宽度${pipeGapResult.middleWidth}米）`;
+            } else {
+                pipeGapResult = calcPipeAndGapSchemeOptimal(widthVal, nozzleType);
+            }
+            const { colNum, sideGapPer, middleWidth, gapNum, gapScheme, actualColGap, adjustDesc } = pipeGapResult;
+            // 更新侧边栏计算结果
+            el.calcResult.textContent = calcStr;
+            el.oddColGunNum.textContent = isSymmetry ? (oddGun.num * 2) : oddGun.num; // 超长分块则×2
+            el.evenColGunNum.textContent = isSymmetry ? (evenGun.num * 2) : evenGun.num;
+            el.widthInput.textContent = widthVal;
+            el.sideGapFixed.textContent = sideGapPer;
+            el.middleWidth.textContent = middleWidth;
+            el.colGapActual.textContent = actualColGap;
+            // 新代码（改为“总宽度÷最优列间距”，和你要求一致）
+            const optimalGap = nozzleType === 'custom' ? Number(el.colGap.value) : config.coverRadius * 2; // 先获取最优列间距
+            el.colCalc.textContent = `${widthVal} ÷ ${optimalGap} = ${(widthVal / optimalGap).toFixed(2)} → ${colNum}列`; // 显示“总宽度÷最优列间距”
+            el.gapSchemeTip.textContent = `间距方案（最优列间距${optimalGap}米）：${adjustDesc}`; // 补充最优列间距说明，更清晰
+            el.symmetryTip.textContent = isSymmetry ? `当前长度${X}米＞240米，中间红线为地头，上下两侧为地尾` : `当前长度${X}米≤240米，下方红线为地头，上方为地尾`;
+            // 计算支管X坐标列表
+            const sideGapPx = sideGapPer * PX_PER_M;
+            let currentX = sideGapPx;
+            const pipeXList = [currentX];
+            for (let i = 0; i < gapNum; i++) {
+                currentX += gapScheme[i] * PX_PER_M;
+                pipeXList.push(currentX);
+            }
+            // 设置绘图区域尺寸和分割线样式
+            el.plot.style.width = `${plotWidth}px`;
+            el.plot.style.height = `${plotHeight}px`;
+            if (isSymmetry) {
+                el.splitLine.className = 'split-line symmetry';
+                el.splitLine.dataset.label = '';
+                el.topTailLabel.style.display = 'none';
+                el.bottomHeadLabel.style.display = 'none';
+            } else {
+                el.splitLine.className = 'split-line normal';
+                el.splitLine.dataset.label = '';
+                el.topTailLabel.style.display = 'block';
+                el.bottomHeadLabel.style.display = 'block';
+            }
+            // 添加辅助标签
+            // 仅地块＞240米（isSymmetry=true）时，才传入开关状态调用
+addSplitLineLabels(plotWidth, sideGapPer, gapScheme, isSymmetry);
+            addBlockLengthLabels(isSymmetry, halfX);
+            addEndMarkLabels(isSymmetry);
+            // 显示列间距&边距米数（非对称模式）
+            if (!isSymmetry && showColGap) {
+                document.querySelectorAll('.col-side-gap-label').forEach(l => l.remove());
+                
+                const leftLabel = document.createElement('div');
+                leftLabel.className = 'col-side-gap-label';
+                leftLabel.textContent = `${sideGapPer.toFixed(1)}米`;
+                leftLabel.style.left = `${(sideGapPer * PX_PER_M) / 2}px`;
+                leftLabel.style.bottom = '-20px';
+                el.plot.appendChild(leftLabel);
+                
+                pipeXList.forEach((pipeX, idx) => {
+                    if (idx < pipeXList.length - 1) {
+                        const nextPipeX = pipeXList[idx + 1];
+                        const actualGap = parseFloat(((nextPipeX - pipeX) / PX_PER_M).toFixed(1));
+                        const midX = (pipeX + nextPipeX) / 2;
+                        
+                        const gapLabel = document.createElement('div');
+                        gapLabel.className = 'col-side-gap-label';
+                        gapLabel.textContent = `${actualGap.toFixed(1)}米`;
+                        gapLabel.style.left = `${midX}px`;
+                        gapLabel.style.bottom = '-20px';
+                        el.plot.appendChild(gapLabel);
+                    }
+                });
+                
+                const rightLabel = document.createElement('div');
+                rightLabel.className = 'col-side-gap-label';
+                rightLabel.textContent = `${sideGapPer.toFixed(1)}米`;
+                rightLabel.style.left = `${plotWidth - (sideGapPer * PX_PER_M) / 2}px`;
+                rightLabel.style.bottom = '-20px';
+                el.plot.appendChild(rightLabel);
+            }
+            // 绘制支管和喷枪，统计数量
+            let plotGunCount = 0;
+            let oddPipeCount = 0;
+            let evenPipeCount = 0;
+            pipeXList.forEach((pipeX, colIndex) => {
+                const isEvenPipe = (colIndex + 1) % 2 === 0;
+                if (isEvenPipe) {
+                    evenPipeCount++;
+                } else {
+                    oddPipeCount++;
+                }
+                const gunConfig = isEvenPipe ? evenGun : oddGun;
+                const gunPositions = gunConfig.positions;
+                
+                if (!isSymmetry) {
+                    gunPositions.forEach((pos, gunIndex) => {
+                        const y = pos * PX_PER_M;
+                        plotGunCount += drawGun(pipeX, y, pos, coverRadius, isEvenPipe, gunIndex, false, isSymmetry, plotHeight, firstGunTipVal, gunGapVal, evenOffset, startDistance, gunPositions);
+                    });
+                } else {
+                    // 对称模式：绘制上半部分
+                    gunPositions.forEach((pos, gunIndex) => {
+                        const y = pos * PX_PER_M;
+                        plotGunCount += drawGun(pipeX, y, pos, coverRadius, isEvenPipe, gunIndex, false, isSymmetry, plotHeight, firstGunTipVal, gunGapVal, evenOffset, startDistance, gunPositions);
+                    });
+                    // 对称模式：绘制下半部分
+                    gunPositions.forEach((pos, gunIndex) => {
+                        const y = pos * PX_PER_M;
+                        plotGunCount += drawGun(pipeX, y, pos, coverRadius, isEvenPipe, gunIndex, true, isSymmetry, plotHeight, firstGunTipVal, gunGapVal, evenOffset, startDistance, gunPositions);
+                    });
+                }
+            });
+            // 计算总喷枪数并更新统计
+            const singlePlotGunCount = (oddGun.num * oddPipeCount) + (evenGun.num * evenPipeCount);
+            const doublePlotGunCount = singlePlotGunCount * 2;
+            el.pipeCount.textContent = colNum;
+            el.oddPipeGun.textContent = `${oddPipeCount} / ${isSymmetry ? (oddGun.num * 2) : oddGun.num}`;
+            el.evenPipeGun.textContent = `${evenPipeCount} / ${isSymmetry ? (evenGun.num * 2) : evenGun.num}`;
+            el.radiusText.textContent = radiusVal;
+            el.calcTotalGun.textContent = isSymmetry ? doublePlotGunCount : singlePlotGunCount;
+            el.plotTotalGun.textContent = plotGunCount;
+            // 喷枪数不匹配校验与报错条显示控制
+            const calcNum = isSymmetry ? doublePlotGunCount : singlePlotGunCount;
+            const actualNum = plotGunCount;
+            if (Math.abs(calcNum - actualNum) > 0) {
+                el.gunMismatchError.style.display = 'block';
+            } else {
+                el.gunMismatchError.style.display = 'none';
+            }
+            // 更新顶部列信息标签
+            if (isSymmetry) {
+                el.colTopGroup.style.left = '-200px';
+                const oddDoublePerCol = oddGun.num * 2;
+                const evenDoublePerCol = evenGun.num * 2;
+                el.oddColLabel.textContent = `奇数：${oddPipeCount}列 | 每列${oddDoublePerCol}杆`;
+                el.evenColLabel.textContent = `偶数：${evenPipeCount}列 | 每列${evenDoublePerCol}杆`;
+                el.colTotalLabel.textContent = `总计：${colNum}列 | 共${doublePlotGunCount}杆`;
+            } else {
+                el.colTopGroup.style.left = '-150px';
+                el.oddColLabel.textContent = `奇数：${oddPipeCount}列 | 每列${oddGun.num}杆`;
+                el.evenColLabel.textContent = `偶数：${evenPipeCount}列 | 每列${evenGun.num}杆`;
+                el.colTotalLabel.textContent = `总计：${colNum}列 | 共${singlePlotGunCount}杆`;
+            }
+            // 更新尺寸标签
+            el.totalLengthLabel.textContent = `总长度：${X}米`;
+            el.bottomWidthLabel.textContent = `地块宽度：${widthVal}米`;
+        }
+
+        // 页面加载时初始化
+window.addEventListener('load', () => {
+    loadSavedConfig(); // ========== 新增：加载配置 ==========
+    controlParams(el.nozzleType.value === 'custom');
+    toggleGunLabelMode();
+    renderLayout();
+    initTabSwitch(); // 初始化标签页
+    bindHistoryEvents(); // 绑定历史记录事件
+});
+    </script>
+</body>
+</html>
