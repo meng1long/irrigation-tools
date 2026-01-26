@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no">
-    <title>喷头计算器</title>
+    <title>喷头计算器（浮窗添加版）</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{padding:15px;font-family:Arial;font-size:14px;background:#f5f5f5;}
@@ -19,31 +19,60 @@
         .result{display:none;}
         .title{font-size:16px;color:#2c3e50;font-weight:bold;margin:18px 0 12px;padding-bottom:6px;border-bottom:2px solid #ecf0f1;}
         .param p{line-height:2.2;color:#34495e;margin:6px 0;}
-        table{width:100%;border-collapse:collapse;margin:10px 0;}
-        th,td{border:1px solid #ddd;padding:8px;text-align:center;}
-        th{background:#ecf0f1;color:#2c3e50;font-weight:bold;}
+        
+        table{width:100%;border-collapse:collapse;margin:10px 0;table-layout:fixed;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center; color:#333;} /* 全局居中+字体颜色统一 */
+th{background:#ecf0f1;color:#2c3e50;font-weight:bold;}
+
+/* 列宽统一 */
+#materialTable th:nth-child(1),
+#materialTable td:nth-child(1) {width: 80px;}
+#materialTable th:nth-child(2),
+#materialTable td:nth-child(2) {width: 180px;}
+#materialTable th:nth-child(3),
+#materialTable td:nth-child(3) {width: 60px;}
+#materialTable th:nth-child(4),
+#materialTable td:nth-child(4) {width: 80px;}
+#materialTable th:nth-child(5),
+#materialTable td:nth-child(5) {width: 80px;}
+#materialTable th:nth-child(6),
+#materialTable td:nth-child(6) {width: 80px;}
+
+/* 数量输入框统一 */
+.qty-input, .custom-qty {
+    width:60px !important;
+    padding:3px !important;
+    font-size:12px !important;
+    text-align:center !important;
+    border:1px solid #ddd !important;
+    border-radius:4px !important;
+}
+
+/* 选配件行样式统一（与其他行一致） */
+tr td {
+    background:none !important; /* 去掉选配件行的背景色差异 */
+}
+
+
+
         .total{background:#f8f9fa;font-weight:bold;color:#e74c3c;}
         .discount-row{background:#fdf2f8;color:#9f7aea;font-weight:bold;}
         .final-total{background:#e8f5e9;color:#27ae60;font-weight:bold;font-size:15px;}
         .tips{font-size:12px;color:#7f8c8d;margin-top:10px;text-align:center;}
         .qty-input{width:60px;padding:4px;text-align:center;border:1px solid #ddd;border-radius:4px;}
         .qty-input:disabled{background:#f5f5f5;cursor:not-allowed;}
-        .custom-item{display:none;} /* 隐藏件默认隐藏 */
+        .custom-item{display:none;}
         .show-custom .custom-item{display:table-row;}
-        /* 核心修复：强制显示有数量的隐藏配件，优先级最高 */
         .custom-item.show-custom-item{display:table-row !important;}
-        /* 新增：强制显示有数量的hide-item配件，优先级最高 */
-.hide-item.show-hide-item{display:table-row !important;}
-        .hide-item{display:none;} /* 完全隐藏的行（仅用于初始区分，显示按钮触发后全部显示） */
-        .hidden-visually{visibility:hidden;} /* 视觉隐藏但保留位置 */
-        /* 正常件底色 */
-        .dili{background-color: #e8f5e9;} /* 地里必备-浅绿 */
-        .ditou{background-color: #e3f2fd;} /* 地头必备-浅蓝 */
-        .beiyong{background-color: #fff3e0;} /* 备用件-浅黄 */
-        /* 隐藏件底色（对应分类浅灰调，保留辨识度） */
-        .custom-item.dili{background-color: #f2f9f2;} /* 地里隐藏件-浅绿灰 */
-        .custom-item.ditou{background-color: #f2f7fd;} /* 地头隐藏件-浅蓝灰 */
-        .custom-item.beiyong{background-color: #fef9f2;} /* 备用件-浅黄灰 */
+        .hide-item.show-hide-item{display:table-row !important;}
+        .hide-item{display:none;}
+        .hidden-visually{visibility:hidden;}
+        .dili{background-color: #e8f5e9;}
+        .ditou{background-color: #e3f2fd;}
+        .beiyong{background-color: #fff3e0;}
+        .custom-item.dili{background-color: #f2f9f2;}
+        .custom-item.ditou{background-color: #f2f7fd;}
+        .custom-item.beiyong{background-color: #fef9f2;}
         .switch-container{display:flex;justify-content:space-between;align-items:center;margin:15px 0;padding:0 10px;flex-wrap:wrap;gap:10px;}
         .switch-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;}
         .switch{position:relative;width:50px;height:26px;border-radius:13px;background:#ddd;cursor:pointer;transition:background 0.3s;}
@@ -70,37 +99,60 @@
         .modal-btn{flex:1;padding:10px;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;}
         .modal-confirm{background:#dc2626;color:#fff;}
         .modal-cancel{background:#f1f5f9;color:#2c3e50;}
-        /* 优惠减免区域样式 */
         .discount-container{margin:15px 0;padding:15px;background:#faf0f5;border-radius:8px;}
         .discount-title{font-size:15px;color:#2c3e50;font-weight:bold;margin-bottom:10px;}
         .discount-input-group{display:flex;gap:10px;margin-bottom:10px;}
         .discount-input-group input{flex:1;}
         .discount-btn{width:100%;padding:10px;background:#9f7aea;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;}
         .discount-btn:active{background:#805ad5;}
-        /* 移动端表格适配 */
         @media screen and (max-width: 480px) {
             th,td{padding:4px;font-size:12px;}
             .qty-input{width:40px;padding:2px;}
             .discount-input-group{flex-direction:column;}
         }
+        /* 整套拆分相关样式 */
+        .package-row{cursor:pointer;}
+        .package-icon{margin-left:5px;transition:transform 0.3s;}
+        .package-icon.expanded{transform:rotate(180deg);}
+        .package-item{display:none;background-color:#f9f9f9;}
+        .package-item td:first-child{text-align:left;padding-left:20px;}
+        .price-input{width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;text-align:center;}
+        /* 自定义新增物料样式 */
+        .delete-custom-item{background:#ff4444;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:12px;}
+        .custom-name,.custom-unit,.custom-price,.custom-qty{padding:4px;border:1px solid #ddd;border-radius:4px;}
+        .add-item-row td{border:none; padding:10px 0;}
+        /* 浮窗样式 */
+        .parts-modal-mask{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;display:none;align-items:center;justify-content:center;}
+        .parts-modal{background:#fff;width:90%;max-width:600px;border-radius:10px;padding:20px;max-height:80vh;overflow-y:auto;}
+        .parts-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:10px;}
+        .parts-modal-title{font-size:16px;font-weight:bold;color:#2c3e50;}
+        .parts-modal-close{font-size:20px;cursor:pointer;color:#7f8c8d;}
+        .parts-grid{display:grid;grid-template-columns:1fr 3fr;gap:10px;}
+        .parts-category{background:#f8f9fa;padding:10px;border-radius:6px;font-weight:bold;color:#2c3e50;text-align:center;}
+        .parts-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+        .parts-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #eee;border-radius:6px;background:#fafafa;}
+        .parts-item-name{font-size:13px;color:#34495e;line-height:1.4;}
+        .parts-item-name small{font-size:11px;color:#7f8c8d;}
+        .parts-item-add{width:24px;height:24px;border-radius:50%;background:#27ae60;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;}
+
     </style>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="box">
-        <h1>喷头计算器</h1>
+        <h1>喷头计算器（浮窗添加版）</h1>
         <div class="history-btn-group">
             <button class="history-small-btn" id="toggleHistoryBtn">📜</button>
             <button class="history-small-btn clear-btn" id="clearHistoryBtn">🗑️</button>
         </div>
         
-        <!-- 喷头类型下拉框 -->
         <div class="inp-group">
             <label>喷头类型</label>
             <select id="nozzleType">
                 <option value="four">四嘴喷头</option>
                 <option value="sand">防沙喷头</option>
+                <option value="horn">羊角喷头</option>
                 <option value="custom">自定义喷头</option>
             </select>
         </div>
@@ -137,295 +189,684 @@
         <button class="btn" id="calcBtn">计算</button>
         
         <div class="result" id="result">
-            <div class="switch-container">
-                <div class="switch-wrap" data-action="edit">
-                    <span class="switch-text" id="editText">锁定数量</span>
-                    <div class="switch" id="editSwitch"></div>
-                </div>
-                <div class="switch-wrap" data-action="custom">
-                    <span class="switch-text" id="customText">显示所有配件</span>
-                    <div class="switch" id="customSwitch"></div>
-                </div>
-            </div>
-            
-            <!-- 新增：优惠减免区域 -->
-            <div class="discount-container">
-                <div class="discount-title">💰 优惠减免</div>
-                <div class="discount-input-group">
-                    <input type="number" id="discountAmount" placeholder="输入减免金额（元）" min="0" step="0.1" value="0">
-                </div>
-                <button class="discount-btn" id="applyDiscountBtn">应用减免</button>
-            </div>
-            
             <div class="title">一、核心参数</div>
             <div class="param" id="param"></div>
             <div class="title">二、物料清单</div>
+           <div class="discount-container">
+    <div class="discount-title">💰 输入优惠后金额</div>
+    <div class="discount-input-group">
+        <input type="number" id="discountAmount" placeholder="输入优惠后金额（元）" min="0" step="0.1" value="0">
+    </div>
+    <button class="discount-btn" id="applyDiscountBtn">应用减免</button>
+    <!-- 最终优化：保留中间垂直线+紧凑布局+淡色小字体 -->
+    <div style="margin-top: 6px; font-size: 11px; color: #a0aec0;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+            <p style="margin: 0; text-align: center;">未减免总价：<span id="showOriginalTotal">0.0</span>元</p>
+            <div style="width: 1px; height: 14px; background-color: #cbd5e0;"></div>
+            <p style="margin: 0; text-align: center;">自动减免：<span id="showAutoDiscount">0.0</span>元</p>
+        </div>
+    </div>
+</div>
+
+
             <table id="materialTable">
     <tr>
     <th>分类</th>
     <th>配件名称</th>
     <th>规格</th>
     <th>单价(元)</th>
-    <th>数量</th>
+    <th id="quantityHeader" style="cursor: pointer; color: #2c3e50; font-weight: bold;" onclick="toggleQtyLock()">
+        数量
+        <span id="lockStatus"></span>
+    </th>
     <th>合计(元)</th>
 </tr>
-    <!-- 地里必备 - 喷头 -->
-    <tr class="dili" id="nozzleTr">
-        <td>地里必备</td>
-        <td id="nozzleName">1.2米四嘴喷头整套</td>
-        <td>套</td>
-        <td id="nozzlePrice">20</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q1" min="0" value="0" disabled></td>
-        <td id="s1">0.0</td>
-    </tr>
-    <!-- 四嘴专属支管 -->
-    <tr class="dili hide-item" id="pipe8mTr">
-        <td>地里必备</td>
-        <td>2.5寸支管整套(8米)</td>
-        <td>盘</td>
-        <td>26</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q2" min="0" value="0" disabled></td>
-        <td id="s2">0.0</td>
-    </tr>
-    <tr class="dili hide-item" id="pipe16mTr">
-        <td>地里必备</td>
-        <td>2.5寸支管整套(16米)</td>
-        <td>盘</td>
-        <td>39</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q3" min="0" value="0" disabled></td>
-        <td id="s3">0.0</td>
-    </tr>
-    <!-- 防沙专属支管 -->
-    <tr class="dili hide-item" id="pipe5mTr">
-        <td>地里必备</td>
-        <td>2.5寸支管整套(5米)</td>
-        <td>盘</td>
-        <td>14</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s5" min="0" value="0" disabled></td>
-        <td id="s_s5">0.0</td>
-    </tr>
-    <tr class="dili hide-item" id="pipe10mTr">
-        <td>地里必备</td>
-        <td>2.5寸支管整套(10米)</td>
-        <td>盘</td>
-        <td>27</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s10" min="0" value="0" disabled></td>
-        <td id="s_s10">0.0</td>
-    </tr>
-    <!-- 通用地里物料 -->
-    <tr class="dili" id="rawTapeTr">
-        <td>地里必备</td>
-        <td>生料带</td>
-        <td>卷</td>
-        <td>0.8</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q4" min="0" value="0" disabled></td>
-        <td id="s4">0.0</td>
-    </tr>
-    <tr class="dili" id="rubberPlugTr">
-        <td>地里必备</td>
-        <td>2.5寸堵头(胶)</td>
-        <td>个</td>
-        <td>1.5</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q5" min="0" value="0" disabled></td>
-        <td id="s5">0.0</td>
-    </tr>
-    <!-- 地头必备 - 主管 -->
-    <tr class="ditou hide-item" id="main16mTr">
-        <td>地头必备</td>
-        <td>3寸16米主管套装</td>
-        <td>盘</td>
-        <td>62</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q8" min="0" value="0" disabled></td>
-        <td id="s8">0.0</td>
-    </tr>
-    <tr class="ditou hide-item" id="main10mTr">
-        <td>地头必备</td>
-        <td>3寸主管10米</td>
-        <td>盘</td>
-        <td>43</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q_s3" min="0" value="0" disabled></td>
-        <td id="s_s3">0.0</td>
-    </tr>
-    <!-- 通用地头物料 -->
-    <tr class="ditou hide-item" id="threeWayTr">
-        <td>地头必备</td>
-        <td>3寸转2.5寸三通1阀整套</td>
-        <td>套</td>
-        <td>39</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q6" min="0" value="0" disabled></td>
-        <td id="s6">0.0</td>
-    </tr>
-    <tr class="ditou hide-item" id="fourWayTr">
-        <td>地头必备</td>
-        <td>3寸转2.5寸四通2阀整套</td>
-        <td>套</td>
-        <td>49</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q7" min="0" value="0" disabled></td>
-        <td id="s7">0.0</td>
-    </tr>
-    <tr class="ditou" id="aluminumPlugTr">
-        <td>地头必备</td>
-        <td>3寸堵头(铝)</td>
-        <td>个</td>
-        <td>4.5</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q9" min="0" value="0" disabled></td>
-        <td id="s9">0.0</td>
-    </tr>
-    <!-- 备用件 - 正常件 -->
-    <tr class="beiyong" id="rubberJointTr">
-        <td>备用件</td>
-        <td>2.5寸胶对接头</td>
-        <td>套</td>
-        <td>2</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q11" min="0" value="0" disabled></td>
-        <td id="s11">0.0</td>
-    </tr>
-    <tr class="beiyong" id="rubberGasketTr">
-        <td>备用件</td>
-        <td>2.5寸内垫(密封圈)</td>
-        <td>个</td>
-        <td>0.7</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q12" min="0" value="0" disabled></td>
-        <td id="s12">0.0</td>
-    </tr>
-    <tr class="beiyong" id="clampTr">
-        <td>备用件</td>
-        <td>2.5寸卡箍</td>
-        <td>个</td>
-        <td>0.4</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q10" min="0" value="0" disabled></td>
-        <td id="s10">0.0</td>
-    </tr>
-    <!-- 隐藏件 - 地头必备 -->
-    <tr class="custom-item ditou" id="fourWay3ValveTr">
-        <td>地头必备</td>
-        <td>2.5寸四通3阀整套</td>
-        <td>套</td>
-        <td>49</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q13" min="0" value="0" disabled></td>
-        <td id="s13">0.0</td>
-    </tr>
-    <tr class="custom-item ditou" id="threeWay3ValveTr">
-        <td>地头必备</td>
-        <td>3寸四通3阀整套</td>
-        <td>套</td>
-        <td>59</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q14" min="0" value="0" disabled></td>
-        <td id="s14">0.0</td>
-    </tr>
-    <!-- 隐藏件 - 主管类 -->
-    <tr class="custom-item ditou" id="bigMainPipe25Tr">
-        <td>地头必备</td>
-        <td>2.5寸主管100米(不带配件)</td>
-        <td>盘</td>
-        <td>200</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q23" min="0" value="0" disabled></td>
-        <td id="s23">0.0</td>
-    </tr>
-    <tr class="custom-item ditou" id="bigMainPipe3Tr">
-        <td>地头必备</td>
-        <td>3寸主管100米(不带配件)</td>
-        <td>盘</td>
-        <td>270</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q24" min="0" value="0" disabled></td>
-        <td id="s24">0.0</td>
-    </tr>
-    <tr class="custom-item ditou" id="bigMainPipe4Tr">
-        <td>地头必备</td>
-        <td>4寸主管100米(不带配件)</td>
-        <td>盘</td>
-        <td>340</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q25" min="0" value="0" disabled></td>
-        <td id="s25">0.0</td>
-    </tr>
-    <!-- 隐藏件 - 地里必备 -->
-    <tr class="custom-item dili" id="controlValveTr">
-        <td>地里必备</td>
-        <td>控制阀门加短接</td>
-        <td>个</td>
-        <td>5</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q21" min="0" value="0" disabled></td>
-        <td id="s21">0.0</td>
-    </tr>
-    <tr class="custom-item dili" id="longPipeTr">
-        <td>地里必备</td>
-        <td>2.5寸支管50米(不带配件)</td>
-        <td>盘</td>
-        <td>100</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q22" min="0" value="0" disabled></td>
-        <td id="s22">0.0</td>
-    </tr>
-    <tr class="custom-item dili" id="waterNeedleTr">
-        <td>地里必备</td>
-        <td>喷头分水针</td>
-        <td>个</td>
-        <td>1.5</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q18" min="0" value="0" disabled></td>
-        <td id="s18">0.0</td>
-    </tr>
-    <!-- 隐藏件 - 备用件 -->
-    <tr class="custom-item beiyong" id="aluminumJointTr">
-        <td>备用件</td>
-        <td>3寸对接头(铝)</td>
-        <td>套</td>
-        <td>7</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q15" min="0" value="0" disabled></td>
-        <td id="s15">0.0</td>
-    </tr>
-    <tr class="custom-item beiyong" id="bigGasketTr">
-        <td>备用件</td>
-        <td>3寸内垫(密封圈)</td>
-        <td>个</td>
-        <td>0.7</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q17" min="0" value="0" disabled></td>
-        <td id="s17">0.0</td>
-    </tr>
-    <tr class="custom-item beiyong" id="bigClampTr">
-        <td>备用件</td>
-        <td>3寸卡箍</td>
-        <td>个</td>
-        <td>0.5</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q26" min="0" value="0" disabled></td>
-        <td id="s26">0.0</td>
-    </tr>
-    <tr class="custom-item beiyong" id="2to3JointTr">
-        <td>备用件</td>
-        <td>2.5变3寸对接头(铝)</td>
-        <td>套</td>
-        <td>6</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q16" min="0" value="0" disabled></td>
-        <td id="s16">0.0</td>
-    </tr>
-    <tr class="custom-item beiyong" id="4to3JointTr">
-        <td>备用件</td>
-        <td>4寸变3寸对接头(铝)</td>
-        <td>套</td>
-        <td>10</td>
-        <td><input type="number" class="qty-input" oninput="calcTotal(false);recordCustomItemQty(this)" id="q27" min="0" value="0" disabled></td>
-        <td id="s27">0.0</td>
-    </tr>
-    <!-- 总价行 -->
-    <tr class="total">
-        <td colspan="5">未减免总价</td>
-        <td id="originalTotal">0.0</td>
-    </tr>
-    <!-- 优惠减免行 -->
-    <tr class="discount-row">
-        <td colspan="5">优惠减免</td>
-        <td id="discountTotal">-0.0</td>
-    </tr>
-    <!-- 最终总价行 -->
-    <tr class="final-total">
-        <td colspan="5">最终应付金额</td>
-        <td id="finalTotal">0.0</td>
-    </tr>
-</table>
-            <!-- 下载按钮放在表格下方（原提示文字位置） -->
-<div style="text-align: center; margin: 20px 0;">
-    <button class="btn" style="background: #3498db; padding: 12px; font-size: 15px; width: 80%;" id="downloadTableBtn">📥 下载物料清单截图</button>
-</div>
+                <!-- 四嘴喷枪整套（1.2米/1.5米） -->
+                <tr class="dili package-row" id="four12PackageTr" data-package="four12">
+                    <td>地里必备</td>
+                    <td>1.2米四嘴喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>20</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('four12', this.value);calcTotal(false)" id="q_four12" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four12">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four12">
+                    <td></td>
+                    <td>四嘴喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four12" data-item="nozzle" value="7" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four12_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four12_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four12">
+                    <td></td>
+                    <td>1.2米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four12" data-item="pole" value="7" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four12_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four12_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four12">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four12" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four12_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four12_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four12">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four12" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four12_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four12_tee">0.0</td>
+                </tr>
+                <tr class="dili package-row" id="four15PackageTr" data-package="four15">
+                    <td>地里必备</td>
+                    <td>1.5米四嘴喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>22</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('four15', this.value);calcTotal(false)" id="q_four15" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four15">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four15">
+                    <td></td>
+                    <td>四嘴喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four15" data-item="nozzle" value="7" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four15_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four15_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four15">
+                    <td></td>
+                    <td>1.5米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four15" data-item="pole" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four15_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four15_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four15">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four15" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four15_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four15_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="four15">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="four15" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_four15_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_four15_tee">0.0</td>
+                </tr>
+                <!-- 防沙喷枪整套（1.2米/1.5米） -->
+                <tr class="dili package-row" id="sand12PackageTr" data-package="sand12">
+                    <td>地里必备</td>
+                    <td>1.2米防沙喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>18</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('sand12', this.value);calcTotal(false)" id="q_sand12" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand12">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand12">
+                    <td></td>
+                    <td>防沙喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand12" data-item="nozzle" value="5" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand12_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand12_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand12">
+                    <td></td>
+                    <td>1.2米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand12" data-item="pole" value="7" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand12_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand12_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand12">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand12" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand12_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand12_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand12">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand12" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand12_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand12_tee">0.0</td>
+                </tr>
+                <tr class="dili package-row" id="sand15PackageTr" data-package="sand15">
+                    <td>地里必备</td>
+                    <td>1.5米防沙喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>20</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('sand15', this.value);calcTotal(false)" id="q_sand15" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand15">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand15">
+                    <td></td>
+                    <td>防沙喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand15" data-item="nozzle" value="5" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand15_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand15_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand15">
+                    <td></td>
+                    <td>1.5米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand15" data-item="pole" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand15_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand15_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand15">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand15" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand15_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand15_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="sand15">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="sand15" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_sand15_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_sand15_tee">0.0</td>
+                </tr>
+                <!-- 羊角喷枪整套（1.2米/1.5米） -->
+                <tr class="dili package-row" id="horn12PackageTr" data-package="horn12">
+                    <td>地里必备</td>
+                    <td>1.2米羊角喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>25</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('horn12', this.value);calcTotal(false)" id="q_horn12" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn12">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn12">
+                    <td></td>
+                    <td>羊角喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn12" data-item="nozzle" value="12" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn12_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn12_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn12">
+                    <td></td>
+                    <td>1.2米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn12" data-item="pole" value="7" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn12_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn12_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn12">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn12" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn12_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn12_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn12">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn12" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn12_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn12_tee">0.0</td>
+                </tr>
+                <tr class="dili package-row" id="horn15PackageTr" data-package="horn15">
+                    <td>地里必备</td>
+                    <td>1.5米羊角喷枪整套 <span class="package-icon">▼</span></td>
+                    <td>套</td>
+                    <td>27</td>
+                    <td><input type="number" class="qty-input package-qty" oninput="updatePackageItems('horn15', this.value);calcTotal(false)" id="q_horn15" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn15">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn15">
+                    <td></td>
+                    <td>羊角喷头</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn15" data-item="nozzle" value="12" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn15_nozzle" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn15_nozzle">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn15">
+                    <td></td>
+                    <td>1.5米立杆</td>
+                    <td>根</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn15" data-item="pole" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn15_pole" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn15_pole">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn15">
+                    <td></td>
+                    <td>90公分地插</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn15" data-item="groundPlug" value="8" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn15_groundPlug" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn15_groundPlug">0.0</td>
+                </tr>
+                <tr class="package-item" data-package="horn15">
+                    <td></td>
+                    <td>2.5寸转1寸三通</td>
+                    <td>个</td>
+                    <td><input type="number" class="price-input package-price" oninput="calcTotal(false)" data-package="horn15" data-item="tee" value="2" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td><input type="number" class="qty-input package-item-qty" oninput="calcTotal(false)" id="q_horn15_tee" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_horn15_tee">0.0</td>
+                </tr>
+                <!-- 原有核心物料 -->
+                <tr class="dili hide-item" id="pipe8mTr">
+                    <td>地里必备</td>
+                    <td>2.5寸支管整套(8米)</td>
+                    <td>盘</td>
+                    <td>26</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q2" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s2">0.0</td>
+                </tr>
+                <tr class="dili hide-item" id="pipe16mTr">
+                    <td>地里必备</td>
+                    <td>2.5寸支管整套(16米)</td>
+                    <td>盘</td>
+                    <td>39</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q3" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s3">0.0</td>
+                </tr>
+                <tr class="dili hide-item" id="pipe5mTr">
+                    <td>地里必备</td>
+                    <td>2.5寸支管整套(5米)</td>
+                    <td>盘</td>
+                    <td>20</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q_s5" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_s5">0.0</td>
+                </tr>
+                <tr class="dili hide-item" id="pipe10mTr">
+                    <td>地里必备</td>
+                    <td>2.5寸支管整套(10米)</td>
+                    <td>盘</td>
+                    <td>27</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q_s10" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_s10">0.0</td>
+                </tr>
+                <tr class="dili" id="rawTapeTr">
+                    <td>地里必备</td>
+                    <td>生料带</td>
+                    <td>卷</td>
+                    <td>0.8</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q4" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s4">0.0</td>
+                </tr>
+                <tr class="dili" id="rubberPlugTr">
+                    <td>地里必备</td>
+                    <td>2.5寸堵头(胶)</td>
+                    <td>个</td>
+                    <td>1.5</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q5" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s5">0.0</td>
+                </tr>
+                <tr class="ditou hide-item" id="main16mTr">
+                    <td>地头必备</td>
+                    <td>3寸16米主管套装</td>
+                    <td>盘</td>
+                    <td>62</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q8" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s8">0.0</td>
+                </tr>
+                <tr class="ditou hide-item" id="main10mTr">
+                    <td>地头必备</td>
+                    <td>3寸主管10米</td>
+                    <td>盘</td>
+                    <td>43</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q_s3" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s_s3">0.0</td>
+                </tr>
+                <tr class="ditou hide-item" id="threeWayTr">
+                    <td>地头必备</td>
+                    <td>3寸转2.5寸三通1阀整套</td>
+                    <td>套</td>
+                    <td>39</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q6" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s6">0.0</td>
+                </tr>
+                <tr class="ditou hide-item" id="fourWayTr">
+                    <td>地头必备</td>
+                    <td>3寸转2.5寸四通2阀整套</td>
+                    <td>套</td>
+                    <td>49</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q7" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s7">0.0</td>
+                </tr>
+                <tr class="ditou" id="aluminumPlugTr">
+                    <td>地头必备</td>
+                    <td>3寸堵头(铝)</td>
+                    <td>个</td>
+                    <td>4.5</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q9" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s9">0.0</td>
+                </tr>
+                <tr class="beiyong" id="rubberJointTr">
+                    <td>备用件</td>
+                    <td>2.5寸胶对接头</td>
+                    <td>套</td>
+                    <td>2</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q11" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s11">0.0</td>
+                </tr>
+                <tr class="beiyong" id="rubberGasketTr">
+                    <td>备用件</td>
+                    <td>2.5寸内垫(密封圈)</td>
+                    <td>个</td>
+                    <td>0.7</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q12" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s12">0.0</td>
+                </tr>
+                <tr class="beiyong" id="clampTr">
+                    <td>备用件</td>
+                    <td>2.5寸卡箍</td>
+                    <td>个</td>
+                    <td>0.4</td>
+                    <td><input type="number" class="qty-input" oninput="calcTotal(false)" disabled id="q10" min="0" value="0" disabled style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;"></td>
+                    <td id="s10">0.0</td>
+                </tr>
+                <!-- 先放自定义物料容器 -->
+                <tbody id="customItemsContainer">
+                    <!-- 新增的自定义行会在这里生成 -->
+                </tbody>
+                <!-- 总价行 -->
+                <tr class="total" id="originalTotalTr">
+                    <td colspan="5">未减免总价</td>
+                    <td id="originalTotal">0.0</td>
+                </tr>
+                <tr class="discount-row" id="discountTotalTr">
+                    <td colspan="5">优惠减免</td>
+                    <td id="discountTotal">-0.0</td>
+                </tr>
+                <tr class="final-total" id="finalTotalTr">
+                    <td colspan="5">最终应付金额</td>
+                    <td id="finalTotal">0.0</td>
+                </tr>
+            </table>
+            <div style="text-align: center; margin: 15px 0; display: flex; justify-content: center; gap: 10px;">
+                <button id="openPartsModalBtn" class="btn" style="padding: 8px 20px; font-size: 14px; width: auto; background: #3498db;">+ 添加配件</button>
+                <button class="btn" style="background: #9b59b6; padding: 8px 15px; font-size: 13px; width: auto;" id="downloadTableBtn">📥 下载清单截图</button>
+            </div>
         </div>
     </div>
+    <!-- 配件浮窗（整合所有配件，按统一分类） -->
+    <div class="parts-modal-mask" id="partsModalMask">
+        <div class="parts-modal">
+            <div class="parts-modal-header">
+                <div class="parts-modal-title">选择配件</div>
+                <div class="parts-modal-close" id="partsModalClose">×</div>
+            </div>
+            <div class="parts-grid">
+                <!-- 对接头类（整合所有对接头相关配件） -->
+                <div class="parts-category">对接头类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸对接头(铝)<br/><small>￥6/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸对接头(铝)","spec":"套","price":6}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸对接头(铝)<br/><small>￥7/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸对接头(铝)","spec":"套","price":7}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸对接头(铝)<br/><small>￥10/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸对接头(铝)","spec":"套","price":10}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸变3寸对接头(铝)<br/><small>￥6/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸变3寸对接头(铝)","spec":"套","price":6}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸变3寸对接头(铝)<br/><small>￥10/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸变3寸对接头(铝)","spec":"套","price":10}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸内垫(密封圈)<br/><small>￥0.7/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸内垫(密封圈)","spec":"个","price":0.7}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸内垫(密封圈)<br/><small>￥0.7/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸内垫(密封圈)","spec":"个","price":0.7}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸胶对接头<br/><small>￥2/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸胶对接头","spec":"套","price":2}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 卡箍类（整合所有卡箍相关配件） -->
+                <div class="parts-category">卡箍类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸卡箍<br/><small>￥0.4/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸卡箍","spec":"个","price":0.4}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸卡箍<br/><small>￥0.5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸卡箍","spec":"个","price":0.5}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸卡箍<br/><small>￥0.8/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸卡箍","spec":"个","price":0.8}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 管子类（整合所有管子相关配件） -->
+                <div class="parts-category">管子类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管50米(不带配件)<br/><small>￥100/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管50米(不带配件)","spec":"盘","price":100}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸主管100米(不带配件)<br/><small>￥200/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸主管100米(不带配件)","spec":"盘","price":200}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸主管100米(不带配件)<br/><small>￥270/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸主管100米(不带配件)","spec":"盘","price":270}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸主管100米(不带配件)<br/><small>￥340/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸主管100米(不带配件)","spec":"盘","price":340}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸主管10米<br/><small>￥43/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸主管10米","spec":"盘","price":43}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管整套(12米)<br/><small>￥31/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管整套(12米)","spec":"盘","price":31}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管整套(8米)<br/><small>￥26/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管整套(8米)","spec":"盘","price":26}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管整套(16米)<br/><small>￥39/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管整套(16米)","spec":"盘","price":39}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管整套(5米)<br/><small>￥20/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管整套(5米)","spec":"盘","price":20}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸支管整套(10米)<br/><small>￥27/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸支管整套(10米)","spec":"盘","price":27}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸16米主管套装<br/><small>￥62/盘</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸16米主管套装","spec":"盘","price":62}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 三通/四通类（整合所有三通四通相关配件） -->
+                <div class="parts-category">三通/四通类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸等口径三通1阀整套<br/><small>￥39/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸等口径三通1阀整套","spec":"套","price":39}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸等口径三通1阀整套<br/><small>￥39/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸等口径三通1阀整套","spec":"套","price":39}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸转2.5寸三通1阀整套<br/><small>￥39/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸转2.5寸三通1阀整套","spec":"套","price":39}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸等口径四通3阀整套<br/><small>￥49/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸等口径四通3阀整套","spec":"套","price":49}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸等口径四通3阀整套<br/><small>￥59/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸等口径四通3阀整套","spec":"套","price":59}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">4寸转2.5寸四通2阀整套<br/><small>￥44/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"4寸转2.5寸四通2阀整套","spec":"套","price":44}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸转2.5寸三通1阀整套<br/><small>￥39/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸转2.5寸三通1阀整套","
+spec":"套","price":39}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸转2.5寸四通2阀整套<br/><small>￥49/套</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸转2.5寸四通2阀整套","spec":"套","price":49}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 控制阀门类（整合所有阀门相关配件） -->
+                <div class="parts-category">控制阀门类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">控制阀门加短接<br/><small>￥5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"控制阀门加短接","spec":"个","price":5}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">控制阀门+70公分双丝对接头<br/><small>￥7/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"控制阀门+70公分双丝对接头","spec":"个","price":7}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">控制阀门+1米双丝对接头<br/><small>￥8/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"控制阀门+1米双丝对接头","spec":"个","price":8}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 堵头类（整合所有堵头相关配件） -->
+                <div class="parts-category">堵头类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸堵头(胶)<br/><small>￥2/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸堵头(胶)","spec":"个","price":2}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸堵头(铝)<br/><small>￥4.5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸堵头(铝)","spec":"个","price":4.5}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">2.5寸堵头(胶)<br/><small>￥1.5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"2.5寸堵头(胶)","spec":"个","price":1.5}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">3寸堵头(铝)<br/><small>￥4.5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"3寸堵头(铝)","spec":"个","price":4.5}'>+</button>
+                    </div>
+                </div>
+                
+                <!-- 其他配件类（整合所有专用配件） -->
+                <div class="parts-category">其他配件类</div>
+                <div class="parts-list">
+                    <div class="parts-item">
+                        <span class="parts-item-name">喷头分水针<br/><small>￥1.5/个</small></span>
+                        <button class="parts-item-add" data-part='{"name":"喷头分水针","spec":"个","price":1.5}'>+</button>
+                    </div>
+                    <div class="parts-item">
+                        <span class="parts-item-name">生料带<br/><small>￥0.8/卷</small></span>
+                        <button class="parts-item-add" data-part='{"name":"生料带","spec":"卷","price":0.8}'>+</button>
+                    </div>
+                </div>
+ <div class="parts-category">自定义配件</div>
+<div class="parts-list" style="grid-column: span 2; display: block; width: 100%;">
+    <div class="custom-input-form" style="padding: 10px; background: #f8f9fa; border-radius: 6px;">
+        <!-- 替换浮窗内“自定义配件”的表格部分 -->
+<table style="width:100%; border-collapse:collapse; font-size:12px;">
+    <thead>
+    <tr>
+        <!-- 关键修改：加宽列宽+增大内边距 -->
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 15%">分类</</th>
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 25%;">名称</</th>
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 15%">规格</</th>
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 15%">单价</</th>
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 15%">数量</</th>
+        <<th style="padding: 8px; text-align:center; border:1px solid #ddd; width: 15%;">操作</</th>
+    </tr>
+</thead>
+
+    <tbody>
+        <tr>
+            <!-- 分类单元格：加宽输入框 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <select id="custom-category" style="width:100%; padding:4px; font-size:12px;">
+                    <option value="选配件">选配件</option>
+                    <option value="赠送件">赠送件</option>
+                </select>
+            </td>
+            <!-- 名称单元格：加宽输入框 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <input type="text" id="custom-name" placeholder="配件名称" style="width:100%; padding:4px; font-size:12px; box-sizing:border-box;">
+            </td>
+            <!-- 规格单元格：增大按钮间距 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="spec-btn" data-spec="个" style="padding: 4px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 3px; background: #3498db; color: white;">个</button>
+                    <button type="button" class="spec-btn" data-spec="套" style="padding: 4px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5;">套</button>
+                    <button type="button" class="spec-btn" data-spec="卷" style="padding: 4px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5;">卷</button>
+                    <button type="button" class="spec-btn" data-spec="盘" style="padding: 4px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5;">盘</button>
+                    <button type="button" class="spec-btn" data-spec="其他" style="padding: 4px 8px; font-size: 12px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5;">其他</button>
+                </div>
+                <input type="text" class="custom-spec-input" placeholder="其他规格" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; margin-top: 6px; display: none;">
+            </td>
+            <!-- 单价单元格：加宽输入框 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <input type="number" id="custom-price" placeholder="0" min="0" step="0.01" style="width:100%; padding:4px; font-size:12px; box-sizing:border-box; text-align:center;">
+            </td>
+            <!-- 数量单元格：加宽输入框 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <input type="number" id="custom-qty" value="1" min="1" style="width:100%; padding:4px; font-size:12px; box-sizing:border-box; text-align:center;">
+            </td>
+            <!-- 操作单元格：放大按钮 -->
+            <td style="padding:8px; text-align:center; border:1px solid #ddd;">
+                <button type="button" onclick="addCustomFromTable()" style="padding:6px 12px; background:#27ae60; color:#fff; border:none; border-radius:4px; font-size:12px;">添加</button>
+
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+        <div style="font-size: 11px; color: #7f8c8d; margin-top: 8px; text-align: center;">
+            长按已添加的配件可修改单个字段
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal-mask" id="clearModal">
         <div class="modal-box">
             <div class="modal-title">确认清空历史记录？</div>
@@ -436,578 +877,623 @@
             </div>
         </div>
     </div>
-        <script>
+    <script>
         const SYMMETRY_THRESHOLD = 240;
-        const PRICE_MAP = {
-    nozzle: { four12:20, four15:22, sand12:18, sand15:20, custom12:20, custom15:22 },
-    pipe: { eightM:26, sixteenM:39, fiveM:14, tenM:27, mainSixteenM:62, mainTenM:43 },
+const PRICE_MAP = {
+    pipe: { eightM:26, twelveM:31, sixteenM:39, fiveM:20, tenM:27, mainSixteenM:62, mainTenM:43 },
     common: {
         q4:0.8, q5:1.5, q6:39, q7:49, q9:4.5, q10:0.4, q11:2, q12:0.7,
-        q13:49, q14:59, q15:7, q16:6, q17:0.7, q18:1.5, q19:6, q20:10, // 修正：q15=7（3寸对接头），q16=6（2.5变3寸接头）
-        q21:5, q22:100, q23:200, q24:270, q25:340, q26:0.5 // q26=0.5（3寸卡箍）
+        q13:49, q14:59, q15:7, q16:6, q17:0.7, q21:5, q22:100,
+        q23:200, q24:270, q25:340, q26:0.5, q_s5:20, q_s10:27, q_s3:43,
+        q30:10, q31:6, q32:10, q33:7, q34:8, q35:2, q36:4.5, q37:0.8
     }
 };
-        
-        let currentNozzleType = "four", currentNozzleSize = "1.2", isEdit = false, isCustomShow = false;
-        let historyList = JSON.parse(localStorage.getItem('calcHistory')) || []; 
-        let currentDiscount = 0;
-        // 存储有数量的配件ID（不管是custom还是hide）
-        let hasQtyItemIds = [];
-        
-        // DOM元素获取（包含所有需要控制的hide-item）
-        const el = {
-            nozzleType: document.getElementById('nozzleType'),
-            gun12Switch: document.getElementById('gun12Switch'),
-            gun15Switch: document.getElementById('gun15Switch'),
-            nozzleName: document.getElementById('nozzleName'),
-            nozzlePrice: document.getElementById('nozzlePrice'),
-            nozzleDiameter: document.getElementById('nozzleDiameter'),
-            colGap: document.getElementById('colGap'),
-            plotLength: document.getElementById('plotLength'),
-            plotWidth: document.getElementById('plotWidth'),
-            calcBtn: document.getElementById('calcBtn'),
-            result: document.getElementById('result'),
-            param: document.getElementById('param'),
-            originalTotal: document.getElementById('originalTotal'),
-            discountTotal: document.getElementById('discountTotal'),
-            finalTotal: document.getElementById('finalTotal'),
-            discountAmount: document.getElementById('discountAmount'),
-            applyDiscountBtn: document.getElementById('applyDiscountBtn'),
-            editSwitch: document.getElementById('editSwitch'),
-            editText: document.getElementById('editText'),
-            customSwitch: document.getElementById('customSwitch'),
-            customText: document.getElementById('customText'),
-            historyPanel: document.getElementById('historyPanel'),
-            toggleHistoryBtn: document.getElementById('toggleHistoryBtn'),
-            clearHistoryBtn: document.getElementById('clearHistoryBtn'),
-            clearModal: document.getElementById('clearModal'),
-            confirmClearBtn: document.getElementById('confirmClearBtn'),
-            cancelClearBtn: document.getElementById('cancelClearBtn'),
-            // 所有核心hide-item
-            threeWayTr: document.getElementById('threeWayTr'),
-            fourWayTr: document.getElementById('fourWayTr'),
-            pipe8mTr: document.getElementById('pipe8mTr'),
-            pipe16mTr: document.getElementById('pipe16mTr'),
-            pipe5mTr: document.getElementById('pipe5mTr'),
-            pipe10mTr: document.getElementById('pipe10mTr'),
-            main16mTr: document.getElementById('main16mTr'),
-            main10mTr: document.getElementById('main10mTr'),
-            waterNeedleSpareTr: document.getElementById('waterNeedleSpareTr')
-        };
-        
-        // 所有需要控制显示的hide-item集合（统一管理）
-        const allHideItems = [
-            el.pipe8mTr, el.pipe16mTr, el.pipe5mTr, el.pipe10mTr,
-            el.main16mTr, el.main10mTr, el.threeWayTr, el.fourWayTr
-        ];
-        
-        // 所有custom-item集合
-        const allCustomItems = document.querySelectorAll('.custom-item');
-        
-        // 核心修复：数量变化时直接硬控显示，不依赖class
-        function recordCustomItemQty(input) {
-    const itemRow = input.closest('tr');
-    const qty = parseFloat(input.value) || 0;
-    // 只要数量>0，强制显示；数量=0，也不隐藏（避免消失）
-    itemRow.style.display = 'table-row !important';
-}
-        
-        // 判断是否是当前喷头类型的核心物料
-        function checkIsCoreItem(itemId) {
-            if (currentNozzleType === "four") {
-                return ['pipe8mTr', 'pipe16mTr', 'main16mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
-            } else if (currentNozzleType === "sand") {
-                return ['pipe5mTr', 'pipe10mTr', 'main10mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
-            } else if (currentNozzleType === "custom") {
-                return ['threeWayTr', 'fourWayTr'].includes(itemId);
-            }
-            return false;
+
+// 配件数据（整合所有配件，按统一分类）
+const PARTS_MAP = {
+    joint: [
+        {name: "2.5寸对接头(铝)", spec: "套", price: 6},
+        {name: "3寸对接头(铝)", spec: "套", price: 7},
+        {name: "4寸对接头(铝)", spec: "套", price: 10},
+        {name: "2.5寸变3寸对接头(铝)", spec: "套", price: 6},
+        {name: "4寸变3寸对接头(铝)", spec: "套", price: 10},
+        {name: "2.5寸内垫(密封圈)", spec: "个", price: 0.7},
+        {name: "3寸内垫(密封圈)", spec: "个", price: 0.7},
+        {name: "2.5寸胶对接头", spec: "套", price: 2}
+    ],
+    clamp: [
+        {name: "2.5寸卡箍", spec: "个", price: 0.4},
+        {name: "3寸卡箍", spec: "个", price: 0.5},
+        {name: "4寸卡箍", spec: "个", price: 0.8}
+    ],
+    pipe: [
+        {name: "2.5寸支管50米(不带配件)", spec: "盘", price: 100},
+        {name: "2.5寸主管100米(不带配件)", spec: "盘", price: 200},
+        {name: "3寸主管100米(不带配件)", spec: "盘", price: 270},
+        {name: "4寸主管100米(不带配件)", spec: "盘", price: 340},
+        {name: "3寸主管10米", spec: "盘", price: 43},
+        {name: "2.5寸支管整套(12米)", spec: "盘", price: 31},
+        {name: "2.5寸支管整套(8米)", spec: "盘", price: 26},
+        {name: "2.5寸支管整套(16米)", spec: "盘", price: 39},
+        {name: "2.5寸支管整套(5米)", spec: "盘", price: 20},
+        {name: "2.5寸支管整套(10米)", spec: "盘", price: 27},
+        {name: "3寸16米主管套装", spec: "盘", price: 62}
+    ],
+    tee: [
+        {name: "2.5寸等口径三通1阀整套", spec: "套", price: 39},
+        {name: "3寸等口径三通1阀整套", spec: "套", price: 39},
+        {name: "4寸转2.5寸三通1阀整套", spec: "套", price: 39},
+        {name: "2.5寸等口径四通3阀整套", spec: "套", price: 49},
+        {name: "3寸等口径四通3阀整套", spec: "套", price: 59},
+        {name: "4寸转2.5寸四通2阀整套", spec: "套", price: 44},
+        {name: "3寸转2.5寸三通1阀整套", spec: "套", price: 39},
+        {name: "3寸转2.5寸四通2阀整套", spec: "套", price: 49}
+    ],
+    valve: [
+        {name: "控制阀门加短接", spec: "个", price: 5},
+        {name: "控制阀门+70公分双丝对接头", spec: "个", price: 7},
+        {name: "控制阀门+1米双丝对接头", spec: "个", price: 8}
+    ],
+    plug: [
+        {name: "3寸堵头(胶)", spec: "个", price: 2},
+        {name: "2.5寸堵头(铝)", spec: "个", price: 4.5},
+        {name: "2.5寸堵头(胶)", spec: "个", price: 1.5},
+        {name: "3寸堵头(铝)", spec: "个", price: 4.5}
+    ],
+    special: [
+        {name: "喷头分水针", spec: "个", price: 1.5},
+        {name: "生料带", spec: "卷", price: 0.8}
+    ]
+};
+
+let currentNozzleType = "four", currentNozzleSize = "1.2", isEdit = false;
+let historyList = JSON.parse(localStorage.getItem('calcHistory')) || []; 
+let currentDiscount = 0;
+let hasQtyItemIds = [];
+let customItemIndex = 1;
+let isQtyLocked = true;
+const el = {
+    nozzleType: document.getElementById('nozzleType'),
+    gun12Switch: document.getElementById('gun12Switch'),
+    gun15Switch: document.getElementById('gun15Switch'),
+    nozzleDiameter: document.getElementById('nozzleDiameter'),
+    colGap: document.getElementById('colGap'),
+    plotLength: document.getElementById('plotLength'),
+    plotWidth: document.getElementById('plotWidth'),
+    calcBtn: document.getElementById('calcBtn'),
+    result: document.getElementById('result'),
+    param: document.getElementById('param'),
+    originalTotal: document.getElementById('originalTotal'),
+    discountTotal: document.getElementById('discountTotal'),
+    finalTotal: document.getElementById('finalTotal'),
+    discountAmount: document.getElementById('discountAmount'),
+    applyDiscountBtn: document.getElementById('applyDiscountBtn'),
+    historyPanel: document.getElementById('historyPanel'),
+    toggleHistoryBtn: document.getElementById('toggleHistoryBtn'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    clearModal: document.getElementById('clearModal'),
+    confirmClearBtn: document.getElementById('confirmClearBtn'),
+    cancelClearBtn: document.getElementById('cancelClearBtn'),
+    threeWayTr: document.getElementById('threeWayTr'),
+    fourWayTr: document.getElementById('fourWayTr'),
+    pipe8mTr: document.getElementById('pipe8mTr'),
+    pipe12mTr: document.getElementById('pipe12mTr'),
+    pipe16mTr: document.getElementById('pipe16mTr'),
+    pipe5mTr: document.getElementById('pipe5mTr'),
+    pipe10mTr: document.getElementById('pipe10mTr'),
+    main16mTr: document.getElementById('main16mTr'),
+    main10mTr: document.getElementById('main10mTr'),
+    customItemsContainer: document.getElementById('customItemsContainer'),
+    openPartsModalBtn: document.getElementById('openPartsModalBtn'),
+    partsModalMask: document.getElementById('partsModalMask'),
+    partsModalClose: document.getElementById('partsModalClose'),
+    downloadTableBtn: document.getElementById('downloadTableBtn')
+};
+
+const allHideItems = [
+    el.pipe8mTr, el.pipe16mTr, el.pipe5mTr, el.pipe10mTr,
+    el.main16mTr, el.main10mTr, el.threeWayTr, el.fourWayTr
+];
+
+// 整套拆分展开/收起
+document.querySelectorAll('.package-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('qty-input')) {
+            const packageId = this.dataset.package;
+            const icon = this.querySelector('.package-icon');
+            const items = document.querySelectorAll(`.package-item[data-package="${packageId}"]`);
+            items.forEach(item => item.style.display = item.style.display === 'table-row' ? 'none' : 'table-row');
+            icon.classList.toggle('expanded');
         }
-        
-        // 重置显示：不管什么状态，先按规则初始化，再强制显示有数量的
-        function resetAllItemsDisplay() {
-    // 初始化hide-item：核心物料显示，非核心默认隐藏
+    });
+});
+
+// 整套数量联动单品数量
+function updatePackageItems(packageId, qty) {
+    const itemQtyInputs = document.querySelectorAll(`.package-item-qty[id^="q_${packageId}_"]`);
+    itemQtyInputs.forEach(input => {
+        input.value = qty;
+    });
+}
+
+function checkIsCoreItem(itemId) {
+    if (currentNozzleType === "four") {
+        return ['pipe8mTr', 'pipe12mTr', 'pipe16mTr', 'main16mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
+    } else if (currentNozzleType === "sand") {
+        return ['pipe5mTr', 'pipe10mTr', 'main10mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
+    } else if (currentNozzleType === "horn") {
+        return ['pipe8mTr', 'pipe12mTr', 'pipe16mTr', 'main16mTr', 'threeWayTr', 'fourWayTr'].includes(itemId);
+    } else if (currentNozzleType === "custom") {
+        return ['threeWayTr', 'fourWayTr'].includes(itemId);
+    }
+    return false;
+}
+
+function resetAllItemsDisplay() {
     allHideItems.forEach(item => {
         item.style.display = checkIsCoreItem(item.id) ? 'table-row' : 'none';
     });
     
-    // 初始化custom-item：默认隐藏
-    allCustomItems.forEach(item => {
-        item.style.display = 'none';
-    });
-    
-    // 关键逻辑：有数量的配件，强制显示（优先级最高，覆盖所有隐藏规则）
     hasQtyItemIds.forEach(itemId => {
         const item = document.getElementById(itemId);
         if (item) item.style.display = 'table-row !important';
     });
-    
-    // 显示所有配件时，强制全部显示
-    if (isCustomShow) {
-        allHideItems.forEach(item => item.style.display = 'table-row');
-        allCustomItems.forEach(item => item.style.display = 'table-row');
-    }
+    document.querySelectorAll('.hide-item .qty-input').forEach(input => input.disabled = true);
 }
-        
-        // 喷头类型变更处理
-        function handleNozzleTypeChange() {
-            currentNozzleType = el.nozzleType.value;
-            switch(currentNozzleType) {
-                case "four":
-                    el.nozzleDiameter.value = 16;
-                    el.colGap.value = 16;
-                    el.nozzleDiameter.disabled = true;
-                    el.colGap.disabled = true;
-                    break;
-                case "sand":
-                    el.nozzleDiameter.value = 10;
-                    el.colGap.value = 10;
-                    el.nozzleDiameter.disabled = true;
-                    el.colGap.disabled = true;
-                    break;
-                case "custom":
-                    el.nozzleDiameter.disabled = false;
-                    el.colGap.disabled = false;
-                    if (!isEdit) toggleEdit();
-                    break;
-            }
-            updateNozzleInfo();
-            resetAllItemsDisplay(); // 重新初始化显示
-            if (el.result.style.display === "block") calcTotal(true);
-        }
-        
-        // 切换显示所有配件（彻底改写）
-        function toggleCustom() {
-    isCustomShow = !isCustomShow;
-    // 开关只隐藏“数量为0”的隐藏配件
-    document.querySelectorAll('.custom-item, .hide-item').forEach(item => {
-        const qty = parseFloat(item.querySelector('.qty-input').value) || 0;
-        item.style.display = qty > 0 ? 'table-row !important' : (isCustomShow ? 'table-row' : 'none');
+// 新增：定义toggleEdit函数（解决自定义喷头切换报错）
+function toggleEdit() {
+    isEdit = !isEdit;
+    const packageQtyInputs = document.querySelectorAll('.package-qty');
+    packageQtyInputs.forEach(input => {
+        input.disabled = !isEdit;
     });
-    el.customText.innerText = isCustomShow ? '隐藏额外配件' : '显示所有配件';
-    el.customSwitch.classList.toggle('active', isCustomShow);
 }
+
+function handleNozzleTypeChange() {
+    currentNozzleType = el.nozzleType.value;
+    switch(currentNozzleType) {
+        case "four":
+        case "horn":
+            el.nozzleDiameter.value = 16;
+            el.colGap.value = 16;
+            el.nozzleDiameter.disabled = true;
+            el.colGap.disabled = true;
+            break;
+        case "sand":
+            el.nozzleDiameter.value = 10;
+            el.colGap.value = 10;
+            el.nozzleDiameter.disabled = true;
+            el.colGap.disabled = true;
+            break;
+        case "custom":
+            el.nozzleDiameter.disabled = false;
+            el.colGap.disabled = false;
+            if (!isEdit) toggleEdit();
+            break;
+    }
+    resetAllItemsDisplay();
+    updatePackageDisplay();
+    if (el.result.style.display === "block") calcTotal(true);
+}
+
+// 切换数量锁定状态
+function toggleQtyLock() {
+    isQtyLocked = !isQtyLocked;
+    const lockStatus = document.getElementById('lockStatus');
+    // 关键修改：只选择数量输入框，排除优惠金额、单价等输入框
+    const qtyInputs = document.querySelectorAll('.qty-input, .custom-qty');
+    
+    lockStatus.textContent = '';
+    qtyInputs.forEach(input => {
+        input.disabled = isQtyLocked; // 仅数量输入框统一锁定/解锁
+    });
+}
+
+
+function updatePackageDisplay() {
+    const allPackages = ['four12', 'four15', 'sand12', 'sand15', 'horn12', 'horn15'];
+    allPackages.forEach(pkg => {
+        const pkgRow = document.getElementById(`${pkg}PackageTr`);
+        const pkgItems = document.querySelectorAll(`.package-item[data-package="${pkg}"]`);
+        const pkgQtyInput = document.getElementById(`q_${pkg}`);
         
-        // 显示所有物料（用于初始化）
-        function showAllItems() {
-            allHideItems.forEach(item => item.style.display = 'table-row');
-            allCustomItems.forEach(item => item.style.display = 'table-row');
+        const isFour = pkg.startsWith('four');
+        const isSand = pkg.startsWith('sand');
+        const isHorn = pkg.startsWith('horn');
+        const is12m = pkg.endsWith('12');
+        const is15m = pkg.endsWith('15');
+        
+        let shouldShow = false;
+        if ((currentNozzleType === "four" && isFour) || 
+            (currentNozzleType === "sand" && isSand) || 
+            (currentNozzleType === "horn" && isHorn) ||
+            currentNozzleType === "custom") {
+            shouldShow = (currentNozzleSize === "1.2" && is12m) || (currentNozzleSize === "1.5" && is15m) || currentNozzleType === "custom";
         }
         
-        // 数值取整为5或10的倍数
-        function to5or10(num) {
-            let ceilNum = Math.ceil(num);
-            return ceilNum <= 5 ? 5 : Math.ceil(ceilNum / 10) * 10;
-        }
-        
-        // 计算2.5寸堵头数量
-        function calc25Dutou(baseNum) {
-            if (baseNum < 5) return baseNum;
-            let div = baseNum / 5, y = Math.floor(div), tail = div - y;
-            return baseNum + (tail >= 0.5 ? y + 1 : y);
-        }
-        
-        // 计算3寸堵头数量
-        function calc3Dutou(wid, colNum) {
-            return colNum < 2 ? 0 : 1 + Math.floor(wid / 65);
-        }
-        
-        // 计算喷头布局
-        function calcNozzleLayout(X, nozzleGap) {
-            const isSymmetry = X > SYMMETRY_THRESHOLD;
-            const halfX = isSymmetry ? X / 2 : X;
-            const division = halfX / nozzleGap;
-            const divisionFixed = division.toFixed(3);
-            const y = Math.floor(division);
-            const tailRaw = division - y;
-            
-            let oddNum, evenNum;
-            if (tailRaw === 0) {
-                oddNum = y || 1;
-                evenNum = (y + 1) || 1;
-            } else if (tailRaw > 0 && tailRaw <= 0.5) {
-                oddNum = y + 1;
-                evenNum = y + 1;
-            } else if (tailRaw > 0.5 && tailRaw < 1) {
-                oddNum = y + 1;
-                evenNum = y + 2;
-            } else {
-                oddNum = y || 1;
-                evenNum = (y + 1) || 1;
-            }
-            const calcStr = isSymmetry 
-                ? `${X}÷2÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}` 
-                : `${X}÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}`;
-            return { isSymmetry, halfX, tail: tailRaw, y, odd: { num: oddNum }, even: { num: evenNum }, calcStr };
-        }
-        
-        // 计算宽度布局
-        function calcWidthLayout(widthVal, colGapVal) {
-            const division = widthVal / colGapVal;
-            const divisionFixed = division.toFixed(3);
-            const y = Math.floor(division);
-            const tail = (division - y).toFixed(3);
-            const calcStr = `${widthVal}÷${colGapVal}=${divisionFixed} | 商=${y} | 尾数=${tail}`;
-            return { calcStr, divisionFixed, y, tail: division - y };
-        }
-        
-        // 计算列数
-        function calcPipeNum(widthVal, colGapVal) {
-            let div = widthVal / colGapVal;
-            return div === Math.floor(div) ? div : Math.floor(div) + 1 || 1;
-        }
-        
-        // 计算短支管数量
-        function calcShortBranch(tail, pipeNum, evenColNum, isSplit) {
-            let num = 0;
-            if (tail === 0) num = pipeNum + evenColNum * 2;
-            else if (tail > 0 && tail <= 0.5) num = pipeNum * 2;
-            else if (tail > 0.5 && tail < 1) num = pipeNum + evenColNum * 2;
-            num = Math.max(num, 1);
-            return isSplit ? num * 2 : num;
-        }
-        
-        // 切换三通/四通显示（兼容新逻辑）
-        function toggleThreeFourWay(isSplit) {
-            if (isSplit) {
-                el.threeWayTr.style.display = isCustomShow ? 'table-row' : 'none';
-                el.fourWayTr.style.display = 'table-row';
-            } else {
-                el.threeWayTr.style.display = 'table-row';
-                el.fourWayTr.style.display = isCustomShow ? 'table-row' : 'none';
-            }
-            // 有数量则强制显示
-            if (hasQtyItemIds.includes('threeWayTr')) el.threeWayTr.style.display = 'table-row !important';
-            if (hasQtyItemIds.includes('fourWayTr')) el.fourWayTr.style.display = 'table-row !important';
-        }
-        
-        // 选择喷头尺寸
-        function chooseNozzleSize(size) {
-            currentNozzleSize = size;
-            if (size === "1.2") {
-                el.gun12Switch.classList.add('active');
-                el.gun15Switch.classList.remove('active');
-            } else {
-                el.gun12Switch.classList.remove('active');
-                el.gun15Switch.classList.add('active');
-            }
-            updateNozzleInfo();
-            if (el.result.style.display === "block") calcTotal(true);
-        }
-        
-        // 更新喷头名称和单价
-        function updateNozzleInfo() {
-            const nozzleKey = `${currentNozzleType}${currentNozzleSize.replace('.', '')}`;
-            const nozzlePrice = PRICE_MAP.nozzle[nozzleKey] || 20;
-            el.nozzleName.innerText = `${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴喷头整套" : currentNozzleType === "sand" ? "防沙喷头整套" : "自定义喷头整套"}`;
-            el.nozzlePrice.innerText = nozzlePrice;
-        }
-        
-        // 切换数量编辑状态
-        function toggleEdit() {
-            isEdit = !isEdit;
-            document.querySelectorAll('.qty-input').forEach(input => input.disabled = !isEdit);
-            el.editSwitch.classList.toggle('active', isEdit);
-            el.editText.innerText = isEdit ? '锁定数量' : '解锁数量';
-        }
-        
-        // 切换历史记录面板
-        function toggleHistory() {
-            el.historyPanel.classList.toggle('show');
-            if (el.historyPanel.classList.contains('show')) renderHistoryList();
-        }
-        
-        // 保存历史记录
-        function saveHistory(num1, num2, totalPrice) {
-            const now = new Date();
-            const timeStr = `${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-            const sortedNum1 = Math.max(num1, num2);
-            const sortedNum2 = Math.min(num1, num2);
-            const nozzleDesc = `${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴" : currentNozzleType === "sand" ? "防沙" : "自定义"}喷头`;
-            const item = { num1: sortedNum1, num2: sortedNum2, totalPrice, timeStr, nozzleDesc };
-            
-            const idx = historyList.findIndex(i => i.num1 === sortedNum1 && i.num2 === sortedNum2 && i.nozzleDesc === nozzleDesc);
-            if (idx > -1) {
-                historyList[idx].totalPrice = totalPrice;
-                historyList[idx].timeStr = timeStr;
-            } else {
-                historyList.unshift(item);
-                if (historyList.length > 5) historyList.pop();
-            }
-            
-            localStorage.setItem('calcHistory', JSON.stringify(historyList));
-            if (el.historyPanel.classList.contains('show')) renderHistoryList();
-        }
-        
-        // 渲染历史记录
-        function renderHistoryList() {
-            if (historyList.length === 0) {
-                el.historyPanel.innerHTML = '<div class="history-item">暂无历史记录</div>';
-                return;
-            }
-            
-            let html = '';
-            historyList.forEach((item, idx) => {
-                html += `<div class="history-item" data-index="${idx}">
-                    <span>${item.num1}×${item.num2}m</span>
-                    <span>|</span>
-                    <span>${item.nozzleDesc}</span>
-                    <span>|</span>
-                    <span>总价${item.totalPrice}</span>
-                    <div class="history-time">${item.timeStr}</div>
-                </div>`;
-            });
-            el.historyPanel.innerHTML = html;
-            
-            document.querySelectorAll('.history-item').forEach(item => {
-                item.addEventListener('click', () => loadHistory(item.dataset.index));
-            });
-        }
-        
-        // 加载历史记录
-        function loadHistory(idx) {
-            const item = historyList[idx];
-            el.plotLength.value = item.num1;
-            el.plotWidth.value = item.num2;
-            
-            if (item.nozzleDesc.includes('四嘴')) el.nozzleType.value = 'four';
-            else if (item.nozzleDesc.includes('防沙')) el.nozzleType.value = 'sand';
-            else el.nozzleType.value = 'custom';
-            handleNozzleTypeChange();
-            
-            chooseNozzleSize(item.nozzleDesc.includes('1.2') ? '1.2' : '1.5');
-            
-            calc();
-            toggleHistory();
-        }
-        
-        // 显示清空确认弹窗
-        function showClearModal() {
-            historyList = JSON.parse(localStorage.getItem('calcHistory')) || [];
-            if (historyList.length === 0) {
-                alert('无记录可清');
-                return;
-            }
-            el.clearModal.style.display = 'flex';
-        }
-        
-        // 隐藏清空确认弹窗
-        function hideClearModal() {
-            el.clearModal.style.display = 'none';
-        }
-        
-        // 确认清空历史记录
-        function confirmClear() {
-            historyList = [];
-            localStorage.removeItem('calcHistory');
-            if (el.historyPanel.classList.contains('show')) renderHistoryList();
-            hideClearModal();
-            alert('记录已清空');
-        }
-        // ===================== 新增：配置持久化+回车触发 相关常量 =====================
+        pkgRow.style.display = shouldShow ? 'table-row' : 'none';
+        pkgItems.forEach(item => item.style.display = shouldShow ? (item.style.display || 'none') : 'none');
+        pkgQtyInput.disabled = !isEdit;
+    });
+}
+
+function to5or10(num) {
+    let ceilNum = Math.ceil(num);
+    return ceilNum <= 5 ? 5 : Math.ceil(ceilNum / 10) * 10;
+}
+
+function calc25Dutou(baseNum) {
+    if (baseNum < 5) return baseNum;
+    let div = baseNum / 5, y = Math.floor(div), tail = div - y;
+    return baseNum + (tail >= 0.5 ? y + 1 : y);
+}
+
+function calc3Dutou(wid, colNum) {
+    return colNum < 2 ? 0 : 1 + Math.floor(wid / 65);
+}
+
+function calcNozzleLayout(X, nozzleGap) {
+    const isSymmetry = X > SYMMETRY_THRESHOLD;
+    const halfX = isSymmetry ? X / 2 : X;
+    const division = halfX / nozzleGap;
+    const divisionFixed = division.toFixed(3);
+    const y = Math.floor(division);
+    const tailRaw = division - y;
+    
+    let oddNum, evenNum;
+    if (tailRaw === 0) {
+        oddNum = y || 1;
+        evenNum = (y + 1) || 1;
+    } else if (tailRaw > 0 && tailRaw <= 0.5) {
+        oddNum = y + 1;
+        evenNum = y + 1;
+    } else if (tailRaw > 0.5 && tailRaw < 1) {
+        oddNum = y + 1;
+        evenNum = y + 2;
+    } else {
+        oddNum = y || 1;
+        evenNum = (y + 1) || 1;
+    }
+    const calcStr = isSymmetry 
+        ? `${X}÷2÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}` 
+        : `${X}÷${nozzleGap}=${divisionFixed} | 商=${y} | 尾数=${tailRaw.toFixed(3)}`;
+    return { isSymmetry, halfX, tail: tailRaw, y, odd: { num: oddNum }, even: { num: evenNum }, calcStr };
+}
+
+function calcWidthLayout(widthVal, colGapVal) {
+    const division = widthVal / colGapVal;
+    const divisionFixed = division.toFixed(3);
+    const y = Math.floor(division);
+    const tail = (division - y).toFixed(3);
+    const calcStr = `${widthVal}÷${colGapVal}=${divisionFixed} | 商=${y} | 尾数=${tail}`;
+    return { calcStr, divisionFixed, y, tail: division - y };
+}
+
+function calcPipeNum(widthVal, colGapVal) {
+    let div = widthVal / colGapVal;
+    return div === Math.floor(div) ? div : Math.floor(div) + 1 || 1;
+}
+
+function calcShortBranch(tail, pipeNum, evenColNum, isSplit) {
+    let num = 0;
+    if (tail === 0) num = pipeNum + evenColNum * 2;
+    else if (tail > 0 && tail <= 0.5) num = pipeNum * 2;
+    else if (tail > 0.5 && tail < 1) num = pipeNum + evenColNum * 2;
+    num = Math.max(num, 1);
+    return isSplit ? num * 2 : num;
+}
+
+function toggleThreeFourWay(isSplit) {
+    if (isSplit) {
+        el.threeWayTr.style.display = 'none';
+        el.fourWayTr.style.display = 'table-row';
+    } else {
+        el.threeWayTr.style.display = 'table-row';
+        el.fourWayTr.style.display = 'none';
+    }
+    if (hasQtyItemIds.includes('threeWayTr')) el.threeWayTr.style.display = 'table-row !important';
+    if (hasQtyItemIds.includes('fourWayTr')) el.fourWayTr.style.display = 'table-row !important';
+}
+
+function chooseNozzleSize(size) {
+    currentNozzleSize = size;
+    if (size === "1.2") {
+        el.gun12Switch.classList.add('active');
+        el.gun15Switch.classList.remove('active');
+    } else {
+        el.gun12Switch.classList.remove('active');
+        el.gun15Switch.classList.add('active');
+    }
+    updatePackageDisplay();
+    if (el.result.style.display === "block") calcTotal(true);
+}
+
+function toggleHistory() {
+    el.historyPanel.classList.toggle('show');
+    if (el.historyPanel.classList.contains('show')) renderHistoryList();
+}
+
+function saveHistory(num1, num2, totalPrice) {
+    const now = new Date();
+    const timeStr = `${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const sortedNum1 = Math.max(num1, num2);
+    const sortedNum2 = Math.min(num1, num2);
+    const nozzleDesc = `${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴" : currentNozzleType === "sand" ? "防沙" : currentNozzleType === "horn" ? "羊角" : "自定义"}喷头`;
+    const item = { num1: sortedNum1, num2: sortedNum2, totalPrice, timeStr, nozzleDesc };
+    
+    const idx = historyList.findIndex(i => i.num1 === sortedNum1 && i.num2 === sortedNum2 && i.nozzleDesc === nozzleDesc);
+    if (idx > -1) {
+        historyList[idx].totalPrice = totalPrice;
+        historyList[idx].timeStr = timeStr;
+    } else {
+        historyList.unshift(item);
+        if (historyList.length > 5) historyList.pop();
+    }
+    
+    localStorage.setItem('calcHistory', JSON.stringify(historyList));
+    if (el.historyPanel.classList.contains('show')) renderHistoryList();
+}
+
+function renderHistoryList() {
+    if (historyList.length === 0) {
+        el.historyPanel.innerHTML = '<div class="history-item">暂无历史记录</div>';
+        return;
+    }
+    
+    let html = '';
+    historyList.forEach((item, idx) => {
+        html += `<div class="history-item" data-index="${idx}">
+            <span>${item.num1}×${item.num2}m</span>
+            <span>|</span>
+            <span>${item.nozzleDesc}</span>
+            <span>|</span>
+            <span>总价${item.totalPrice}</span>
+            <div class="history-time">${item.timeStr}</div>
+        </div>`;
+    });
+    el.historyPanel.innerHTML = html;
+    
+    document.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', () => loadHistory(item.dataset.index));
+    });
+}
+
+function loadHistory(idx) {
+    const item = historyList[idx];
+    el.plotLength.value = item.num1;
+    el.plotWidth.value = item.num2;
+    
+    if (item.nozzleDesc.includes('羊角')) el.nozzleType.value = 'horn';
+    else if (item.nozzleDesc.includes('四嘴')) el.nozzleType.value = 'four';
+    else if (item.nozzleDesc.includes('防沙')) el.nozzleType.value = 'sand';
+    else el.nozzleType.value = 'custom';
+    handleNozzleTypeChange();
+    
+    chooseNozzleSize(item.nozzleDesc.includes('1.2') ? '1.2' : '1.5');
+    
+    calc();
+    toggleHistory();
+}
+
+function showClearModal() {
+    historyList = JSON.parse(localStorage.getItem('calcHistory')) || [];
+    if (historyList.length === 0) {
+        alert('无记录可清');
+        return;
+    }
+    el.clearModal.style.display = 'flex';
+}
+
+function hideClearModal() {
+    el.clearModal.style.display = 'none';
+}
+
+function confirmClear() {
+    historyList = [];
+    localStorage.removeItem('calcHistory');
+    if (el.historyPanel.classList.contains('show')) renderHistoryList();
+    hideClearModal();
+    alert('记录已清空');
+}
+
 const CONFIG_KEY = "sprinklerAppConfig";
 const configFields = {
-  plotLength: { type: "input", selector: "#plotLength" },
-  plotWidth: { type: "input", selector: "#plotWidth" },
-  nozzleType: { type: "select", selector: "#nozzleType" },
-  gun12Switch: { type: "switch", selector: "#gun12Switch" },
-  gun15Switch: { type: "switch", selector: "#gun15Switch" },
-  nozzleDiameter: { type: "input", selector: "#nozzleDiameter" },
-  colGap: { type: "input", selector: "#colGap" },
-  discountAmount: { type: "input", selector: "#discountAmount" }
+    plotLength: { type: "input", selector: "#plotLength" },
+    plotWidth: { type: "input", selector: "#plotWidth" },
+    nozzleType: { type: "select", selector: "#nozzleType" },
+    gun12Switch: { type: "switch", selector: "#gun12Switch" },
+    gun15Switch: { type: "switch", selector: "#gun15Switch" },
+    nozzleDiameter: { type: "input", selector: "#nozzleDiameter" },
+    colGap: { type: "input", selector: "#colGap" },
+    discountAmount: { type: "input", selector: "#discountAmount" }
 };
 
-// ===================== 新增：配置持久化功能（刷新不丢数据） =====================
 function saveConfig() {
-  const config = {};
-  Object.keys(configFields).forEach(key => {
-    const field = configFields[key];
-    const element = document.querySelector(field.selector);
-    if (!element) return;
-    if (field.type === "input") config[key] = element.value;
-    else if (field.type === "select") config[key] = element.value;
-    else if (field.type === "switch") config[key] = element.classList.contains("active");
-  });
-  // 新增：保存“是否已经计算过”的状态
-  config.hasCalculated = el.result.style.display === "block";
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    const config = {};
+    Object.keys(configFields).forEach(key => {
+        const field = configFields[key];
+        const element = document.querySelector(field.selector);
+        if (!element) return;
+        if (field.type === "input") config[key] = element.value;
+        else if (field.type === "select") config[key] = element.value;
+        else if (field.type === "switch") config[key] = element.classList.contains("active");
+    });
+    config.hasCalculated = el.result.style.display === "block";
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
 }
 
 function loadConfig() {
-  const savedConfig = localStorage.getItem(CONFIG_KEY);
-  if (savedConfig) {
-    const config = JSON.parse(savedConfig);
-    Object.keys(configFields).forEach(key => {
-      const field = configFields[key];
-      const element = document.querySelector(field.selector);
-      if (!element || config[key] === undefined) return;
-      if (field.type === "input") element.value = config[key];
-      else if (field.type === "select") {
-        element.value = config[key];
-        handleNozzleTypeChange();
-      } else if (field.type === "switch") {
-        if (key === "gun12Switch" && config[key]) chooseNozzleSize("1.2");
-        if (key === "gun15Switch" && config[key]) chooseNozzleSize("1.5");
-      }
-    });
-    // 关键：如果之前计算过，刷新后自动重新计算（图表就出来了）
-    if (config.hasCalculated && config.plotLength && config.plotWidth) {
-      setTimeout(calc, 300); // 延迟一点执行，确保页面加载完
+    const savedConfig = localStorage.getItem(CONFIG_KEY);
+    if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        Object.keys(configFields).forEach(key => {
+            const field = configFields[key];
+            const element = document.querySelector(field.selector);
+            if (!element || config[key] === undefined) return;
+            if (field.type === "input") element.value = config[key];
+            else if (field.type === "select") {
+                element.value = config[key];
+                handleNozzleTypeChange();
+            } else if (field.type === "switch") {
+                if (key === "gun12Switch" && config[key]) chooseNozzleSize("1.2");
+                if (key === "gun15Switch" && config[key]) chooseNozzleSize("1.5");
+            }
+        });
+        if (config.hasCalculated && config.plotLength && config.plotWidth) {
+            setTimeout(calc, 300);
+        }
+    } else {
+        document.getElementById('plotLength').value = "200";
+        document.getElementById('plotWidth').value = "48";
+        document.getElementById('nozzleDiameter').value = "16";
+        document.getElementById('colGap').value = "16";
+        el.nozzleType.value = "four";
+        chooseNozzleSize("1.2");
     }
-  } else {
-    // 无配置时显示默认值
-    document.getElementById('plotLength').value = "200";
-    document.getElementById('plotWidth').value = "48";
-    document.getElementById('nozzleDiameter').value = "16";
-    document.getElementById('colGap').value = "16";
-    el.nozzleType.value = "four";
-    chooseNozzleSize("1.2");
-  }
 }
 
 function initConfigPersistence() {
-  window.addEventListener("load", loadConfig);
-  Object.keys(configFields).forEach(key => {
-    const field = configFields[key];
-    const element = document.querySelector(field.selector);
-    if (!element) return;
-    // 输入时实时保存，确保每改一个字都存下来
-    if (field.type === "input" || field.type === "select") {
-      element.addEventListener("input", saveConfig);
-      element.addEventListener("change", saveConfig);
-    } else if (field.type === "switch") {
-      element.addEventListener("click", saveConfig);
-    }
-  });
-  // 计算按钮点击时保存，同时标记“已计算”
-  el.calcBtn.addEventListener("click", function() {
-    el.result.style.display = "block"; // 标记为已计算
-    saveConfig(); // 保存状态
-  });
+    window.addEventListener("load", loadConfig);
+    Object.keys(configFields).forEach(key => {
+        const field = configFields[key];
+        const element = document.querySelector(field.selector);
+        if (!element) return;
+        if (field.type === "input" || field.type === "select") {
+            element.addEventListener("input", saveConfig);
+            element.addEventListener("change", saveConfig);
+        } else if (field.type === "switch") {
+            element.addEventListener("click", saveConfig);
+        }
+    });
+    el.calcBtn.addEventListener("click", function() {
+        el.result.style.display = "block";
+        saveConfig();
+    });
 }
 
-// ===================== 新增：仅长宽输入框回车触发生成 =====================
 function initEnterGenerateOnlyInSizeInputs() {
-  const lengthInput = document.getElementById('plotLength');
-  const widthInput = document.getElementById('plotWidth');
-  const calcBtn = document.getElementById('calcBtn');
-  [lengthInput, widthInput].forEach(input => {
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        calcBtn.click();
-      }
+    const lengthInput = document.getElementById('plotLength');
+    const widthInput = document.getElementById('plotWidth');
+    const calcBtn = document.getElementById('calcBtn');
+    [lengthInput, widthInput].forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                calcBtn.click();
+            }
+        });
     });
-  });
-  document.addEventListener('keydown', function(e) {
-    const activeElement = document.activeElement;
-    if (e.key === 'Enter' && activeElement !== lengthInput && activeElement !== widthInput) {
-      e.preventDefault();
-    }
-  }, { capture: true });
-}
-        
-        // 应用优惠减免
-        function applyDiscount() {
-            const discount = parseFloat(el.discountAmount.value) || 0;
-            const originalTotal = parseFloat(el.originalTotal.innerText) || 0;
-            
-            if (discount < 0) {
-                alert('减免金额不能为负数');
-                el.discountAmount.value = 0;
-                currentDiscount = 0;
-            } else if (discount > originalTotal) {
-                alert(`减免金额不能超过未减免总价（${originalTotal}元）`);
-                el.discountAmount.value = originalTotal;
-                currentDiscount = originalTotal;
-            } else {
-                currentDiscount = discount;
-            }
-            
-            el.discountTotal.innerText = `-${currentDiscount.toFixed(1)}`;
-            const finalTotal = (originalTotal - currentDiscount).toFixed(1) + "元";
-            el.finalTotal.innerText = finalTotal;
-            
-            if (el.result.style.display === "block") {
-                const X = Number(el.plotLength.value);
-                const widthVal = Number(el.plotWidth.value);
-                saveHistory(X, widthVal, finalTotal);
-            }
+    document.addEventListener('keydown', function(e) {
+        const activeElement = document.activeElement;
+        if (e.key === 'Enter' && activeElement !== lengthInput && activeElement !== widthInput) {
+            e.preventDefault();
         }
-        
-        // 计算总价
+    }, { capture: true });
+}
+
+function applyDiscount() {
+    const targetFinalPrice = parseFloat(el.discountAmount.value) || 0;
+    const originalTotal = parseFloat(el.originalTotal.innerText) || 0;
+    const originalTotalTr = document.getElementById('originalTotalTr');
+    const discountTotalTr = document.getElementById('discountTotalTr');
+    const finalTotalTr = document.getElementById('finalTotalTr');
+    
+    let currentDiscount = originalTotal - targetFinalPrice;
+    
+    if (targetFinalPrice <= 0 || currentDiscount <= 0) {
+        currentDiscount = 0;
+        originalTotalTr.style.display = 'none';
+        discountTotalTr.style.display = 'none';
+        finalTotalTr.querySelector('td:first-child').innerText = '总价';
+        el.finalTotal.innerText = originalTotal.toFixed(1);
+    } else if (targetFinalPrice > originalTotal) {
+        alert(`优惠后金额不能超过原总价（${originalTotal}元）`);
+        el.discountAmount.value = originalTotal;
+        currentDiscount = 0;
+        originalTotalTr.style.display = 'none';
+        discountTotalTr.style.display = 'none';
+        finalTotalTr.querySelector('td:first-child').innerText = '总价';
+        el.finalTotal.innerText = originalTotal.toFixed(1);
+    } else {
+        originalTotalTr.style.display = 'table-row';
+        discountTotalTr.style.display = 'table-row';
+        finalTotalTr.querySelector('td:first-child').innerText = '最终应付金额';
+        el.finalTotal.innerText = targetFinalPrice.toFixed(1);
+    }
+    
+    el.discountTotal.innerText = `-${currentDiscount.toFixed(1)}`;
+    document.getElementById('showOriginalTotal').innerText = originalTotal.toFixed(1);
+    document.getElementById('showAutoDiscount').innerText = currentDiscount.toFixed(1);
+    
+    if (el.result.style.display === "block") {
+        const X = Number(el.plotLength.value);
+        const widthVal = Number(el.plotWidth.value);
+        const finalTotal = el.finalTotal.innerText;
+        saveHistory(X, widthVal, finalTotal + "元");
+    }
+}
+
 function calcTotal(isApplyDiscount = true) {
     let total = 0;
-    
-    document.querySelectorAll('[id^="s"]').forEach(el => {
-        if (el.id !== 'originalTotal' && el.id !== 'discountTotal' && el.id !== 'finalTotal') {
+    document.querySelectorAll('[id^="s_"]').forEach(el => {
+        if (!['originalTotal', 'discountTotal', 'finalTotal'].includes(el.id)) {
             el.innerText = '0.0';
         }
     });
     
-    // 喷头总价
-    const nozzleQty = parseFloat(document.getElementById('q1').value) || 0;
-    const nozzleUnitPrice = parseFloat(el.nozzlePrice.innerText) || 0;
-    const nozzleTotal = (nozzleQty * nozzleUnitPrice).toFixed(1);
-    document.getElementById('s1').innerText = nozzleTotal;
-    total += parseFloat(nozzleTotal);
+    const packageRows = document.querySelectorAll('.package-row');
+    packageRows.forEach(row => {
+        const pkgId = row.dataset.package;
+        const qty = parseFloat(document.getElementById(`q_${pkgId}`).value) || 0;
+        const price = parseFloat(row.querySelector('td:nth-child(4)').innerText) || 0;
+        const subtotal = (qty * price).toFixed(1);
+        document.getElementById(`s_${pkgId}`).innerText = subtotal;
+        total += parseFloat(subtotal);
+    });
     
-    // 管子总价（四嘴+防沙专属）
-    const q2 = parseFloat(document.getElementById('q2').value) || 0;
-    const s2 = (q2 * PRICE_MAP.pipe.eightM).toFixed(1);
-    document.getElementById('s2').innerText = s2;
-    total += parseFloat(s2);
+    const packageItems = document.querySelectorAll('.package-item');
+    packageItems.forEach(item => {
+        const pkgId = item.dataset.package;
+        const pkgQty = parseFloat(document.getElementById(`q_${pkgId}`).value) || 0;
+        const itemQty = parseFloat(item.querySelector('.package-item-qty').value) || 0;
+        const itemPrice = parseFloat(item.querySelector('.package-price').value) || 0;
+        const extraQty = Math.max(0, itemQty - pkgQty);
+        const subtotal = (extraQty * itemPrice).toFixed(1);
+        const sId = item.querySelector('td:last-child').id;
+        document.getElementById(sId).innerText = subtotal;
+        total += parseFloat(subtotal);
+    });
     
-    const q3 = parseFloat(document.getElementById('q3').value) || 0;
-    const s3 = (q3 * PRICE_MAP.pipe.sixteenM).toFixed(1);
-    document.getElementById('s3').innerText = s3;
-    total += parseFloat(s3);
-    
-    const q_s5 = parseFloat(document.getElementById('q_s5').value) || 0;
-    const s_s5 = (q_s5 * PRICE_MAP.pipe.fiveM).toFixed(1);
-    document.getElementById('s_s5').innerText = s_s5;
-    total += parseFloat(s_s5);
-    
-    const q_s10 = parseFloat(document.getElementById('q_s10').value) || 0;
-    const s_s10 = (q_s10 * PRICE_MAP.pipe.tenM).toFixed(1);
-    document.getElementById('s_s10').innerText = s_s10;
-    total += parseFloat(s_s10);
-    
-    const q8 = parseFloat(document.getElementById('q8').value) || 0;
-    const s8 = (q8 * PRICE_MAP.pipe.mainSixteenM).toFixed(1);
-    document.getElementById('s8').innerText = s8;
-    total += parseFloat(s8);
-    
-    const q_s3 = parseFloat(document.getElementById('q_s3').value) || 0;
-    const s_s3 = (q_s3 * PRICE_MAP.pipe.mainTenM).toFixed(1);
-    document.getElementById('s_s3').innerText = s_s3;
-    total += parseFloat(s_s3);
-    
-    // 通用物料+隐藏件总价（遍历所有qty-input，确保无遗漏）
-    document.querySelectorAll('.qty-input').forEach(input => {
+    document.querySelectorAll('.qty-input:not(.package-qty):not(.package-item-qty)').forEach(input => {
         const qtyId = input.id;
-        // 跳过已单独统计的配件，避免重复计算
-        if (['q1', 'q2', 'q3', 'q_s5', 'q_s10', 'q8', 'q_s3'].includes(qtyId)) return;
-        
-        const sId = qtyId.startsWith('q_s') ? `s${qtyId.replace('q_', '')}` : `s${qtyId.replace('q', '')}`;
+        const sId = qtyId.replace('q', 's');
         const sEl = document.getElementById(sId);
         if (!sEl) return;
-        
-        let unitPrice = PRICE_MAP.common[qtyId] || 0;
-        if (unitPrice === 0) {
+        let unitPrice = 0;
+        if (PRICE_MAP.common[qtyId]) {
+            unitPrice = PRICE_MAP.common[qtyId];
+        } else {
             const priceCell = input.closest('tr').querySelector('td:nth-child(4)');
             unitPrice = parseFloat(priceCell.innerText) || 0;
         }
-        
         const qty = parseFloat(input.value) || 0;
         const subtotal = (qty * unitPrice).toFixed(1);
         sEl.innerText = subtotal;
         total += parseFloat(subtotal);
     });
     
+    // 自定义配件金额计算
+    document.querySelectorAll('.custom-dynamic').forEach(row => {
+        const price = parseFloat(row.dataset.price) || 0;
+        const qty = parseFloat(row.dataset.qty) || 0;
+        const amount = price * qty;
+        total += amount;
+        row.querySelector('.custom-amount').innerText = amount.toFixed(2);
+    });
+    
     const originalTotalStr = total.toFixed(1);
     el.originalTotal.innerText = originalTotalStr;
-    
+    document.getElementById('showOriginalTotal').innerText = originalTotalStr;
     if (isApplyDiscount) {
         applyDiscount();
     } else {
@@ -1015,174 +1501,533 @@ function calcTotal(isApplyDiscount = true) {
         const finalTotal = (parseFloat(originalTotalStr) - currentDiscount).toFixed(1);
         el.finalTotal.innerText = finalTotal;
     }
-    
     return el.finalTotal.innerText;
 }
-        
-        // 核心计算逻辑
-        function calc() {
-            const X = Number(el.plotLength.value);
-            const widthVal = Number(el.plotWidth.value);
-            const colGapVal = Number(el.colGap.value);
-            const nozzleGapVal = Number(el.nozzleDiameter.value);
-            
-            if (!X || !widthVal || !colGapVal || !nozzleGapVal || X <=0 || widthVal <=0 || colGapVal <=0 || nozzleGapVal <=0) {
-                alert('请填写有效的正数值');
-                return;
-            }
-            
-            const nozzleLayout = calcNozzleLayout(X, nozzleGapVal);
-            const widthLayout = calcWidthLayout(widthVal, colGapVal);
-            const pipeNum = calcPipeNum(widthVal, colGapVal);
-            const isSplit = nozzleLayout.isSymmetry;
-            const oddColNum = Math.ceil(pipeNum / 2);
-            const evenColNum = Math.floor(pipeNum / 2);
-            const finalOddNum = isSplit ? nozzleLayout.odd.num * 2 : nozzleLayout.odd.num;
-            const finalEvenNum = isSplit ? nozzleLayout.even.num * 2 : nozzleLayout.even.num;
-            const totalNozzle = Math.max(0, (oddColNum * finalOddNum) + (evenColNum * finalEvenNum));
-            
-            const mat = {
-                q1: totalNozzle,
-                q4: to5or10(totalNozzle / 3),
-                q5: calc25Dutou(isSplit ? pipeNum * 2 : pipeNum),
-                q6: Math.max(0, (pipeNum >= 2 && !isSplit) ? pipeNum : 0),
-                q7: Math.max(0, (pipeNum >= 2 && isSplit) ? pipeNum : 0),
-                q9: calc3Dutou(widthVal, pipeNum),
-                q10: to5or10(totalNozzle * 0.1) * 4,
-                q11: to5or10(totalNozzle * 0.1),
-                q12: to5or10(totalNozzle * 0.1) * 2,
-                q13:0, q14:0, q15:0, q16:0, q17:0, q18:0, q19:0, q20:0,
-                q21:0, q22:0, q23:0, q24:0, q25:0, q26:0,
-                q2:0, q3:0, q8:0, q_s5:0, q_s10:0, q_s3:0
-            };
-            
-            if (currentNozzleType === "four") {
-                mat.q2 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
-                mat.q3 = Math.max(0, totalNozzle - mat.q2);
-                mat.q8 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
-            } else if (currentNozzleType === "sand") {
-                mat.q_s5 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
-                mat.q_s10 = Math.max(0, totalNozzle - mat.q_s5);
-                mat.q_s3 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
-            }
-            
-            Object.keys(mat).forEach(key => {
-                const inputEl = document.getElementById(key);
-                if (inputEl) inputEl.value = mat[key];
+
+function calc() {
+    const X = Number(el.plotLength.value);
+    const widthVal = Number(el.plotWidth.value);
+    const colGapVal = Number(el.colGap.value);
+    const nozzleGapVal = Number(el.nozzleDiameter.value);
+    
+    if (!X || !widthVal || !colGapVal || !nozzleGapVal || X <=0 || widthVal <=0 || colGapVal <=0 || nozzleGapVal <=0) {
+        alert('请填写有效的正数值');
+        return;
+    }
+    
+    const nozzleLayout = calcNozzleLayout(X, nozzleGapVal);
+    const widthLayout = calcWidthLayout(widthVal, colGapVal);
+    const pipeNum = calcPipeNum(widthVal, colGapVal);
+    const isSplit = nozzleLayout.isSymmetry;
+    const oddColNum = Math.ceil(pipeNum / 2);
+    const evenColNum = Math.floor(pipeNum / 2);
+    const finalOddNum = isSplit ? nozzleLayout.odd.num * 2 : nozzleLayout.odd.num;
+    const finalEvenNum = isSplit ? nozzleLayout.even.num * 2 : nozzleLayout.even.num;
+    const totalNozzle = Math.max(0, (oddColNum * finalOddNum) + (evenColNum * finalEvenNum));
+    
+    document.querySelectorAll('.qty-input').forEach(input => input.value = 0);
+    
+    const currentPackageId = `${currentNozzleType}${currentNozzleSize.replace('.', '')}`;
+    const currentPackageQtyInput = document.getElementById(`q_${currentPackageId}`);
+    if (currentPackageQtyInput) {
+        currentPackageQtyInput.value = totalNozzle;
+        updatePackageItems(currentPackageId, totalNozzle);
+    }
+    
+    const mat = {
+        q4: to5or10(totalNozzle / 3),
+        q5: calc25Dutou(isSplit ? pipeNum * 2 : pipeNum),
+        q6: Math.max(0, (pipeNum >= 2 && !isSplit) ? pipeNum : 0),
+        q7: Math.max(0, (pipeNum >= 2 && isSplit) ? pipeNum : 0),
+        q9: calc3Dutou(widthVal, pipeNum),
+        q10: to5or10(totalNozzle * 0.1) * 4,
+        q11: to5or10(totalNozzle * 0.1),
+        q12: to5or10(totalNozzle * 0.1) * 2,
+        q35: to5or10(pipeNum * 0.2),
+        q36: to5or10(pipeNum * 0.2),
+        q37: to5or10(totalNozzle * 0.1) * 2,
+        q13:0, q14:0, q15:0, q16:0, q17:0, q21:0, q22:0, q23:0, q24:0, q25:0, q26:0,
+        q2:0, q3:0, q8:0, q_s5:0, q_s10:0, q_s3:0, q30:0, q31:0, q32:0, q33:0, q34:0
+    };
+    
+    if (currentNozzleType === "four" || currentNozzleType === "horn") {
+        mat.q2 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
+        mat.q3 = Math.max(0, totalNozzle - mat.q2);
+        mat.q8 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
+    } else if (currentNozzleType === "sand") {
+        mat.q_s5 = calcShortBranch(nozzleLayout.tail, pipeNum, evenColNum, isSplit);
+        mat.q_s10 = Math.max(0, totalNozzle - mat.q_s5);
+        mat.q_s3 = Math.max(0, pipeNum >= 2 ? pipeNum : 0);
+    }
+    
+    Object.keys(mat).forEach(key => {
+        if (key === 'q4_new' || key === 'q18') return;
+        const inputEl = document.getElementById(key);
+        if (inputEl) inputEl.value = mat[key];
+    });
+    
+    toggleThreeFourWay(isSplit);
+    resetAllItemsDisplay();
+    updatePackageDisplay();
+    
+    el.param.innerHTML = `
+        <p>✅ 分块：${isSplit ? `是(2块，单块${(X/2).toFixed(1)}m)` : '否'}</p>
+        <p>✅ 长度核算：${nozzleLayout.calcStr}</p>
+        <p>✅ 宽度核算：${widthLayout.calcStr}</p>
+        <p>✅ 列数：共${pipeNum}列(奇${oddColNum}/偶${evenColNum})</p>
+        <p>✅ 每列喷头数：奇${finalOddNum}支 偶${finalEvenNum}支 | 总喷头数${totalNozzle}支</p>
+    `;
+    
+    el.result.style.display = "block";
+    el.result.scrollIntoView({ behavior: "smooth" });
+    const totalPrice = calcTotal();
+    saveHistory(X, widthVal, totalPrice);
+}
+
+// 浮窗相关功能
+function initPartsModal() {
+    el.openPartsModalBtn.addEventListener('click', function() {
+        el.partsModalMask.style.display = 'flex';
+    });
+    
+    el.partsModalClose.addEventListener('click', function() {
+        el.partsModalMask.style.display = 'none';
+    });
+    
+    el.partsModalMask.addEventListener('click', function(e) {
+        if (e.target === el.partsModalMask) {
+            el.partsModalMask.style.display = 'none';
+        }
+    });
+    
+    // 原有的配件添加按钮
+    document.querySelectorAll('.parts-item-add:not(.add-custom-btn)').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const partStr = this.getAttribute('data-part');
+            const part = JSON.parse(partStr);
+            addCustomPart(part);
+        });
+    });
+    
+    // 新增：浮窗表格的交互功能
+    setTimeout(() => {
+        // 规格按钮点击事件
+        document.querySelectorAll('.spec-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const specValue = this.dataset.spec;
+                const specInput = document.querySelector('.custom-spec-input');
+                const allBtns = document.querySelectorAll('.spec-btn');
+                
+                // 重置所有按钮样式
+                allBtns.forEach(b => {
+                    b.style.background = '#f5f5f5';
+                    b.style.color = '#333';
+                });
+                
+                // 设置选中按钮样式
+                this.style.background = '#3498db';
+                this.style.color = 'white';
+                
+                if (specValue === '其他') {
+                    specInput.style.display = 'block';
+                    specInput.focus();
+                } else {
+                    specInput.style.display = 'none';
+                    specInput.value = specValue;
+                }
             });
-            
-            toggleThreeFourWay(isSplit);
-            resetAllItemsDisplay(); // 计算后重置显示，确保有数量的配件显示
-            
-            el.param.innerHTML = `
-                <p>✅ 分块：${isSplit ? `是(2块，单块${(X/2).toFixed(1)}m)` : '否'}</p>
-                <p>✅ 长度核算：${nozzleLayout.calcStr}</p>
-                <p>✅ 宽度核算：${widthLayout.calcStr}</p>
-                <p>✅ 列数：共${pipeNum}列(奇${oddColNum}/偶${evenColNum})</p>
-                <p>✅ 每列喷头数：奇${finalOddNum}支 偶${finalEvenNum}支 | 总喷头数${totalNozzle}支</p>
-                <p>✅ 喷头：${currentNozzleSize}米${currentNozzleType === "four" ? "四嘴" : currentNozzleType === "sand" ? "防沙" : "自定义"}</p>
-            `;
-            
-            el.result.style.display = "block";
-            el.result.scrollIntoView({ behavior: "smooth" });
-            
-            const totalPrice = calcTotal();
-            saveHistory(X, widthVal, totalPrice);
+        });
+        
+        // 添加按钮事件
+        const addBtn = document.querySelector('.add-custom-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', addCustomFromTable);
         }
         
-        // 绑定所有事件（强化输入框监听）
-        function bindEvents() {
-            el.nozzleType.addEventListener('change', handleNozzleTypeChange);
-            
-            document.querySelectorAll('.switch-wrap[data-size]').forEach(wrap => {
-                wrap.addEventListener('click', () => chooseNozzleSize(wrap.dataset.size));
+        // Enter键添加
+        document.querySelectorAll('.custom-name, .custom-price, .custom-qty').forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    addCustomFromTable();
+                }
             });
+        });
+    }, 100);
+}
+
+// 直接弹窗输入，不用找输入框，避免选择器问题
+function addCustomFromTable() {
+    // 直接读取表格内输入框的值（id和输入框完全对应）
+    const category = document.getElementById('custom-category').value;
+    const name = document.getElementById('custom-name').value.trim();
+    const specInput = document.querySelector('.custom-spec-input');
+    const price = parseFloat(document.getElementById('custom-price').value) || 0;
+    const qty = parseInt(document.getElementById('custom-qty').value) || 1;
+    
+    // 读取选中的规格（按钮或自定义输入）
+    let spec = specInput.value.trim();
+    if (!spec) {
+        const activeBtn = document.querySelector('.spec-btn[style*="background: #3498db"]');
+        spec = activeBtn ? activeBtn.dataset.spec : '个';
+    }
+    
+    // 验证必填项
+    if (!name) {
+        alert('请填写配件名称');
+        document.getElementById('custom-name').focus();
+        return;
+    }
+    if (price < 0) {
+        alert('单价不能为负数');
+        document.getElementById('custom-price').focus();
+        return;
+    }
+    
+    // 添加配件
+    const part = { name, spec, price, category };
+    addCustomPart(part, qty);
+    
+    // 清空输入框，方便继续添加
+    document.getElementById('custom-name').value = '';
+    document.getElementById('custom-price').value = '';
+    document.getElementById('custom-qty').value = '1';
+    specInput.value = '';
+    specInput.style.display = 'none';
+    document.querySelectorAll('.spec-btn').forEach(btn => {
+        btn.style.background = '#f5f5f5';
+        btn.style.color = '#333';
+    });
+    document.getElementById('custom-name').focus();
+}
+
+
+// 修改现有的addCustomPart函数，添加分类支持
+function addCustomPart(part, qty = 1) {
+    const itemId = `custom_${customItemIndex}`;
+    const newRow = document.createElement('tr');
+    newRow.className = 'custom-item custom-dynamic';
+    newRow.id = itemId;
+    newRow.dataset.name = part.name;
+    newRow.dataset.spec = part.spec;
+    newRow.dataset.price = part.price || 0;
+    newRow.dataset.qty = qty;
+    newRow.dataset.category = part.category || '选配件';
+    
+    const category = part.category || '选配件';
+    const price = part.price || 0;
+    
+    // 关键修改：统一居中+数量框样式+合计颜色
+    newRow.innerHTML = `
+        <td style="text-align: center; font-size: 12px; color: ${category === '赠送件' ? '#27ae60' : '#333'};" class="custom-label">${category}</td>
+        <td style="padding: 4px; text-align: center;" class="custom-name">${part.name}</td>
+        <td style="padding: 4px; text-align: center;" class="custom-spec">${part.spec}</td>
+        <td style="padding: 4px; text-align: center;" class="custom-price">${price}</td>
+        <td style="padding: 4px; text-align: center;">
+            <input type="number" class="qty-input custom-qty" value="${qty}" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;" ${isQtyLocked ? 'disabled' : ''}>
+        </td>
+        <td style="font-size: 12px; text-align: center; padding: 4px; color: #333;" class="custom-amount">${(price * qty).toFixed(1)}</td>
+    `;
+
+    // 左滑删除
+    let startX = 0;
+    let isSwiping = false;
+    newRow.style.transition = 'transform 0.2s ease-out';
+    newRow.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+    });
+    newRow.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+        const diffX = startX - e.touches[0].clientX;
+        if (diffX > 0 && diffX <= 30) newRow.style.transform = `translateX(-${diffX}px)`;
+    });
+    newRow.addEventListener('touchend', (e) => {
+        isSwiping = false;
+        const diffX = startX - e.changedTouches[0].clientX;
+        newRow.style.transform = 'translateX(0)';
+        if (diffX > 20 && confirm('确定删除这个物料吗？')) {
+            newRow.remove();
+            calcTotal();
+        }
+    });
+
+    // 长按修改单个字段（按哪个改哪个）
+    const cells = newRow.querySelectorAll('td');
+    cells.forEach((cell, index) => {
+        if (index === 4) return; // 跳过数量列
+        if (index === 5) return; // 跳过金额列
+        
+        cell.addEventListener('touchstart', function(e) {
+            const timer = setTimeout(() => {
+                let newValue;
+                const currentValue = this.innerText;
+                
+                switch(index) {
+                    case 0: // 分类
+                        newValue = prompt("修改分类（选配件/赠送件）：", currentValue);
+                        if (newValue === '选配件' || newValue === '赠送件') {
+                            newRow.dataset.category = newValue;
+                            this.innerText = newValue;
+                            this.style.color = newValue === '赠送件' ? '#27ae60' : '#333';
+                        }
+                        break;
+                    case 1: // 名称
+                        newValue = prompt("修改配件名称：", currentValue);
+                        if (newValue) {
+                            newRow.dataset.name = newValue;
+                            this.innerText = newValue;
+                        }
+                        break;
+                    case 2: // 规格
+                        newValue = prompt("修改规格：", currentValue);
+                        if (newValue) {
+                            newRow.dataset.spec = newValue;
+                            this.innerText = newValue;
+                        }
+                        break;
+                    case 3: // 单价
+                        newValue = prompt("修改单价（元）：", currentValue);
+                        if (!isNaN(newValue) && newValue >= 0) {
+                            newRow.dataset.price = newValue;
+                            this.innerText = parseFloat(newValue).toFixed(1);
+                            // 更新金额
+                            updateCustomAmount(newRow);
+                        }
+                        break;
+                }
+            }, 500);
             
-            document.querySelectorAll('.switch-wrap[data-action]').forEach(wrap => {
-                wrap.addEventListener('click', () => {
-                    wrap.dataset.action === 'edit' ? toggleEdit() : toggleCustom();
-                });
-            });
+            // 清除定时器
+            const clearTimer = () => {
+                clearTimeout(timer);
+                cell.removeEventListener('touchend', clearTimer);
+                cell.removeEventListener('touchmove', clearTimer);
+            };
             
-            el.toggleHistoryBtn.addEventListener('click', toggleHistory);
-            el.clearHistoryBtn.addEventListener('click', showClearModal);
-            el.confirmClearBtn.addEventListener('click', confirmClear);
-            el.cancelClearBtn.addEventListener('click', hideClearModal);
-            
-            el.calcBtn.addEventListener('click', calc);
-            
-            el.applyDiscountBtn.addEventListener('click', applyDiscount);
-            el.discountAmount.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') applyDiscount();
-            });
-            
-            // 三重事件绑定，确保数量变化100%触发
-            document.querySelectorAll('.qty-input').forEach(input => {
-            // ===== 1. 新增：前置零过滤逻辑（放在input事件最前面）=====
+            cell.addEventListener('touchend', clearTimer);
+            cell.addEventListener('touchmove', clearTimer);
+        });
+    });
+
+    // 数量修改同步金额
+    newRow.querySelector('.custom-qty').addEventListener('input', function() {
+        const qty = Number(this.value) || 0;
+        newRow.dataset.qty = qty;
+        updateCustomAmount(newRow);
+    });
+
+    el.customItemsContainer.appendChild(newRow);
+    newRow.style.display = 'table-row';
+    customItemIndex++;
+    calcTotal();
+    
+    // 关闭浮窗
+    el.partsModalMask.style.display = 'none';
+}
+
+// 更新自定义配件金额
+function updateCustomAmount(row) {
+    const price = parseFloat(row.dataset.price) || 0;
+    const qty = parseFloat(row.dataset.qty) || 0;
+    const amount = price * qty;
+    // 确保金额格式与正常件一致（0显示0.0，非0保留1位小数）
+    const amountStr = amount === 0 ? '0.0' : amount.toFixed(1);
+    row.querySelector('.custom-amount').innerText = amountStr;
+    calcTotal();
+}
+
+
+
+// 自定义配件：添加时弹窗输入+表格无框+长按修改
+function addBlankCustomPart() {
+    // 1. 添加时弹窗输入参数
+    const name = prompt("请输入配件名称：", "");
+    if (!name) return; // 取消输入则退出
+    const spec = prompt("请输入规格单位（如个/套）：", "");
+    if (!spec) return;
+    const price = prompt("请输入单价（元）：", "0");
+    if (isNaN(price) || price < 0) {
+        alert("单价必须是非负数字");
+        return;
+    }
+    const qty = prompt("请输入数量：", "1");
+    if (isNaN(qty) || qty < 0) {
+        alert("数量必须是正整数");
+        return;
+    }
+    
+    // 2. 创建表格行（关键：添加 newRow 定义）
+    const itemId = `custom_${customItemIndex}`;
+    const newRow = document.createElement('tr');
+    newRow.className = 'custom-item custom-dynamic';
+    newRow.id = itemId;
+    newRow.dataset.name = name;
+    newRow.dataset.spec = spec;
+    newRow.dataset.price = price;
+    newRow.dataset.qty = qty;
+    
+    // 表格内容（纯文本显示）
+    newRow.innerHTML = `
+         <td style="text-align: center; font-size: 12px; color: #333;" class="custom-label">${price == 0 ? '赠送件' : '选配件'}</td>
+         <td style="padding: 4px; text-align: center;" class="custom-name">${name}</td>
+         <td style="padding: 4px; text-align: center;" class="custom-spec">${spec}</td>
+         <td style="padding: 4px; text-align: center;" class="custom-price">${price}</td>
+         <td style="padding: 4px; text-align: center;">
+             <input type="number" class="qty-input custom-qty" value="${qty}" min="0" style="width: 50px; padding: 2px; font-size: 12px; text-align: center; box-sizing: border-box;" ${isQtyLocked ? 'disabled' : ''}>
+         </td>
+         <td style="font-size: 12px; text-align: center; padding: 4px; color: #333;" class="custom-amount">${(price * qty).toFixed(1)}</td>
+     `;
+    
+    // 3. 左滑删除
+    let startX = 0;
+    let isSwiping = false;
+    newRow.style.transition = 'transform 0.2s ease-out';
+    newRow.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+    });
+    newRow.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+        const diffX = startX - e.touches[0].clientX;
+        if (diffX > 0 && diffX <= 30) newRow.style.transform = `translateX(-${diffX}px)`;
+    });
+    newRow.addEventListener('touchend', (e) => {
+        isSwiping = false;
+        const diffX = startX - e.changedTouches[0].clientX;
+        newRow.style.transform = 'translateX(0)';
+        if (diffX > 20 && confirm('确定删除这个物料吗？')) {
+            newRow.remove();
+            calcTotal();
+        }
+    });
+    
+    // 4. 长按修改（重新弹窗输入）
+    newRow.addEventListener('touchstart', () => {
+        let longPressTimer = setTimeout(() => {
+            const newName = prompt("修改配件名称：", newRow.dataset.name);
+            if (newName) {
+                newRow.dataset.name = newName;
+                newRow.querySelector('.custom-name').innerText = newName;
+            }
+            const newSpec = prompt("修改规格单位：", newRow.dataset.spec);
+            if (newSpec) {
+                newRow.dataset.spec = newSpec;
+                newRow.querySelector('.custom-spec').innerText = newSpec;
+            }
+            const newPrice = prompt("修改单价（元）：", newRow.dataset.price);
+            if (!isNaN(newPrice) && newPrice >= 0) {
+                newRow.dataset.price = newPrice;
+                newRow.querySelector('.custom-price').innerText = newPrice;
+                newRow.querySelector('.custom-label').innerText = newPrice == 0 ? '赠送件' : '选配件';
+                newRow.querySelector('.custom-label').style.color = newPrice == 0 ? '#27ae60' : '#666';
+            }
+            const newQty = prompt("修改数量：", newRow.dataset.qty);
+            if (!isNaN(newQty) && newQty >= 0) {
+                newRow.dataset.qty = newQty;
+                newRow.querySelector('.custom-qty').value = newQty;
+            }
+            // 更新金额
+            const finalPrice = Number(newRow.dataset.price);
+            const finalQty = Number(newRow.dataset.qty);
+            newRow.querySelector('.custom-amount').innerText = (finalPrice * finalQty).toFixed(1);
+            calcTotal();
+        }, 500);
+        
+        // 取消长按
+        newRow.addEventListener('touchend', () => clearTimeout(longPressTimer));
+        newRow.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+    });
+    
+    // 5. 数量修改同步金额
+    newRow.querySelector('.custom-qty').addEventListener('input', function() {
+        const qty = Number(this.value) || 0;
+        newRow.dataset.qty = qty;
+        const price = Number(newRow.dataset.price) || 0;
+        newRow.querySelector('.custom-amount').innerText = (price * qty).toFixed(1);
+        calcTotal();
+    });
+    
+    // 6. 添加到表格
+    el.customItemsContainer.appendChild(newRow);
+    newRow.style.display = 'table-row';
+    customItemIndex++;
+    el.partsModalMask.style.display = 'none';
+    calcTotal();
+}
+
+
+function bindEvents() {
+    el.nozzleType.addEventListener('change', handleNozzleTypeChange);
+    document.querySelectorAll('.switch-wrap[data-size]').forEach(wrap => {
+        wrap.addEventListener('click', () => chooseNozzleSize(wrap.dataset.size));
+    });
+    
+    el.toggleHistoryBtn.addEventListener('click', toggleHistory);
+    el.clearHistoryBtn.addEventListener('click', showClearModal);
+    el.confirmClearBtn.addEventListener('click', confirmClear);
+    el.cancelClearBtn.addEventListener('click', hideClearModal);
+    el.calcBtn.addEventListener('click', calc);
+    el.applyDiscountBtn.addEventListener('click', applyDiscount);
+    el.discountAmount.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') applyDiscount();
+    });
+    
+    document.querySelectorAll('.qty-input, .price-input, .custom-qty').forEach(input => {
         input.addEventListener('input', function() {
-            // 只保留数字，过滤非数字字符
-            let val = this.value.replace(/[^0-9]/g, '');
-            // 处理前置零：长度>1且以0开头，去掉所有前置零
-            if (val.length > 1 && val.startsWith('0')) {
+            let val = this.value.replace(/[^0-9.]/g, '');
+            if (val.includes('.') && val.split('.').length > 2) {
+                val = val.split('.')[0] + '.' + val.split('.')[1];
+            }
+            if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) {
                 val = val.replace(/^0+/, '');
-                // 若去掉后为空（如输入0000），保留一个0
                 if (val === '') val = '0';
             }
-            // 赋值回输入框，确保至少为0
-            this.value = val || '0';
-            
-            // 原有逻辑：数量变化时记录并显示
-            recordCustomItemQty(this);
+            this.value = val;
         });
-                input.addEventListener('input', function() {
-                    recordCustomItemQty(this);
-                });
-                input.addEventListener('change', function() {
-                    recordCustomItemQty(this);
-                });
-                input.addEventListener('blur', function() {
-                    recordCustomItemQty(this);
-                    resetAllItemsDisplay(); // 失焦后再重置一次，双重保障
-                });
+    });
+    
+    el.downloadTableBtn.addEventListener('click', async function() {
+        try {
+            const table = document.getElementById('materialTable');
+            document.querySelectorAll('.qty-input, .custom-qty').forEach(input => {
+                const qty = parseFloat(input.value) || 0;
+                if (qty > 0) {
+                    let row = input.closest('tr');
+                    while (row && row.tagName === 'TR') {
+                        row.style.display = 'table-row !important';
+                        row = row.previousElementSibling;
+                    }
+                }
             });
-        // 找到下载按钮的事件绑定，替换为以下代码
-el.downloadTableBtn = document.getElementById('downloadTableBtn');
-el.downloadTableBtn.addEventListener('click', async function() {
-    try {
-        const table = document.getElementById('materialTable');
-        // 确保有数量的配件显示
-        document.querySelectorAll('.qty-input').forEach(input => {
-            const qty = parseFloat(input.value) || 0;
-            if (qty > 0) input.closest('tr').style.display = 'table-row !important';
-        });
-        // 1. 高清截图表格
-        const canvas = await html2canvas(table, {
-            scale: 3, // 高清适配APP
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        });
-        // 2. 转为Blob并保存到相册目录
-        canvas.toBlob(blob => {
-            // 关键：DCIM是相册默认扫描目录
-            const fileName = `DCIM/灌溉物料清单_${new Date().getTime()}.png`;
-            saveAs(blob, fileName); // 用FileSaver保存到相册
-        });
-    } catch (err) {
-        // 失败提示已删除，如需保留可恢复alert语句
-    }
-});
+            const canvas = await html2canvas(table, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            canvas.toBlob(blob => {
+                const fileName = `DCIM/灌溉物料清单_${new Date().getTime()}.png`;
+                saveAs(blob, fileName);
+            });
+        } catch (err) {}
+    });
+    
+    initPartsModal();
 }
-        
-        // 页面初始化
-        window.onload = function() {
-            bindEvents();
-            el.nozzleDiameter.disabled = true;
-            el.colGap.disabled = true;
-            updateNozzleInfo();
-            resetAllItemsDisplay(); // 初始化显示规则
-            if (el.historyPanel.classList.contains('show')) renderHistoryList();
-            initConfigPersistence(); // 刷新保存配置
-  initEnterGenerateOnlyInSizeInputs(); // 回车触发计算
+
+window.onload = function() {
+    bindEvents();
+    el.nozzleDiameter.disabled = true;
+    el.colGap.disabled = true;
+    resetAllItemsDisplay();
+    updatePackageDisplay();
+    if (el.historyPanel.classList.contains('show')) renderHistoryList();
+    initConfigPersistence();
+    initEnterGenerateOnlyInSizeInputs();
+    
+    document.getElementById('originalTotalTr').style.display = 'none';
+    document.getElementById('discountTotalTr').style.display = 'none';
+    document.getElementById('finalTotalTr').querySelector('td:first-child').innerText = '总价';
+    toggleQtyLock();
 };
     </script>
 </body>
