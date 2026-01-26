@@ -1728,86 +1728,163 @@ function addCustomPart(part, qty = 1) {
         <td style="font-size: 12px; text-align: center; padding: 4px; color: #333;" class="custom-amount">${(price * qty).toFixed(1)}</td>
     `;
 
-    // 左滑删除
-    let startX = 0;
-    let isSwiping = false;
-    newRow.style.transition = 'transform 0.2s ease-out';
-    newRow.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
-        isSwiping = true;
-    });
-    newRow.addEventListener('touchmove', (e) => {
-        if (!isSwiping) return;
-        const diffX = startX - e.touches[0].clientX;
-        if (diffX > 0 && diffX <= 30) newRow.style.transform = `translateX(-${diffX}px)`;
-    });
-    newRow.addEventListener('touchend', (e) => {
-        isSwiping = false;
-        const diffX = startX - e.changedTouches[0].clientX;
-        newRow.style.transform = 'translateX(0)';
-        if (diffX > 20 && confirm('确定删除这个物料吗？')) {
-            newRow.remove();
-            calcTotal();
-        }
-    });
+    // 左滑删除（原触屏事件+新增鼠标事件）
+let startX = 0;
+let isSwiping = false;
+newRow.style.transition = "transform 0.2s ease-out";
+// 原有触屏事件（保留）
+newRow.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isSwiping = true;
+});
+newRow.addEventListener('touchmove', (e) => {
+    if (!isSwiping) return;
+    const diffX = startX - e.touches[0].clientX;
+    if (diffX > 0 && diffX <= 30) newRow.style.transform = `translateX(-${diffX}px)`;
+});
+newRow.addEventListener('touchend', (e) => {
+    isSwiping = false;
+    const diffX = startX - e.changedTouches[0].clientX;
+    newRow.style.transform = 'translateX(0)';
+    if (diffX > 20 && confirm('确定删除这个物料吗？')) {
+        newRow.remove();
+        calcTotal();
+    }
+});
+// 新增鼠标事件（适配电脑）
+newRow.addEventListener('mousedown', (e) => {
+    startX = e.clientX;
+    isSwiping = true;
+});
+newRow.addEventListener('mousemove', (e) => {
+    if (!isSwiping) return;
+    const diffX = startX - e.clientX;
+    if (diffX > 0 && diffX <= 30) newRow.style.transform = `translateX(-${diffX}px)`;
+});
+newRow.addEventListener('mouseup', (e) => {
+    isSwiping = false;
+    const diffX = startX - e.clientX;
+    newRow.style.transform = 'translateX(0)';
+    if (diffX > 20 && confirm('确定删除这个物料吗？')) {
+        newRow.remove();
+        calcTotal();
+    }
+});
+newRow.addEventListener('mouseleave', () => {
+    isSwiping = false;
+    newRow.style.transform = 'translateX(0)';
+});
 
-    // 长按修改单个字段（按哪个改哪个）
-    const cells = newRow.querySelectorAll('td');
-    cells.forEach((cell, index) => {
-        if (index === 4) return; // 跳过数量列
-        if (index === 5) return; // 跳过金额列
-        
-        cell.addEventListener('touchstart', function(e) {
-            const timer = setTimeout(() => {
-                let newValue;
-                const currentValue = this.innerText;
-                
-                switch(index) {
-                    case 0: // 分类
-                        newValue = prompt("修改分类（选配件/赠送件）：", currentValue);
-                        if (newValue === '选配件' || newValue === '赠送件') {
-                            newRow.dataset.category = newValue;
-                            this.innerText = newValue;
-                            this.style.color = newValue === '赠送件' ? '#27ae60' : '#333';
-                        }
-                        break;
-                    case 1: // 名称
-                        newValue = prompt("修改配件名称：", currentValue);
-                        if (newValue) {
-                            newRow.dataset.name = newValue;
-                            this.innerText = newValue;
-                        }
-                        break;
-                    case 2: // 规格
-                        newValue = prompt("修改规格：", currentValue);
-                        if (newValue) {
-                            newRow.dataset.spec = newValue;
-                            this.innerText = newValue;
-                        }
-                        break;
-                    case 3: // 单价
-                        newValue = prompt("修改单价（元）：", currentValue);
-                        if (!isNaN(newValue) && newValue >= 0) {
-                            newRow.dataset.price = newValue;
-                            this.innerText = parseFloat(newValue).toFixed(1);
-                            // 更新金额
-                            updateCustomAmount(newRow);
-                        }
-                        break;
-                }
-            }, 500);
-            
-            // 清除定时器
-            const clearTimer = () => {
-                clearTimeout(timer);
-                cell.removeEventListener('touchend', clearTimer);
-                cell.removeEventListener('touchmove', clearTimer);
-            };
-            
-            cell.addEventListener('touchend', clearTimer);
-            cell.addEventListener('touchmove', clearTimer);
-        });
+// 长按修改单个字段（原触屏事件+新增鼠标事件）
+const cells = newRow.querySelectorAll('td');
+cells.forEach((cell, index) => {
+    if (index === 4) return; // 跳过数量列
+    if (index === 5) return; // 跳过金额列
+    // 原有触屏事件（保留）
+    cell.addEventListener('touchstart', function(e) {
+        const timer = setTimeout(() => {
+            let newValue;
+            const currentValue = this.innerText;
+            switch(index) {
+                case 0: // 分类
+                    newValue = prompt("修改分类（选配件/赠送件）：", currentValue);
+                    if (newValue === '选配件' || newValue === '赠送件') {
+                        newRow.dataset.category = newValue;
+                        this.innerText = newValue;
+                        this.style.color = newValue === '赠送件' ? '#27ae60' : '#333';
+                    }
+                    break;
+                case 1: // 名称
+                    newValue = prompt("修改配件名称：", currentValue);
+                    if (newValue) {
+                        newRow.dataset.name = newValue;
+                        this.innerText = newValue;
+                    }
+                    break;
+                case 2: // 规格
+                    newValue = prompt("修改规格：", currentValue);
+                    if (newValue) {
+                        newRow.dataset.spec = newValue;
+                        this.innerText = newValue;
+                    }
+                    break;
+                case 3: // 单价
+                    newValue = prompt("修改单价（元）：", currentValue);
+                    if (!isNaN(newValue) && newValue >= 0) {
+                        newRow.dataset.price = newValue;
+                        this.innerText = newValue;
+                        newRow.querySelector('.custom-label').innerText = newValue == 0 ? '赠送件' : '选配件';
+                        newRow.querySelector('.custom-label').style.color = newValue == 0 ? '#27ae60' : '#333';
+                        const finalPrice = Number(newRow.dataset.price);
+                        const finalQty = Number(newRow.dataset.qty);
+                        newRow.querySelector('.custom-amount').innerText = (finalPrice * finalQty).toFixed(1);
+                        calcTotal();
+                    }
+                    break;
+            }
+        }, 500);
+        const cancelLongPress = () => {
+            clearTimeout(timer);
+            newRow.removeEventListener('touchend', cancelLongPress);
+            newRow.removeEventListener('touchmove', cancelLongPress);
+        };
+        newRow.addEventListener('touchend', cancelLongPress);
+        newRow.addEventListener('touchmove', cancelLongPress);
     });
+    // 新增鼠标长按事件（适配电脑）
+    cell.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return; // 排除右键
+        const timer = setTimeout(() => {
+            let newValue;
+            const currentValue = this.innerText;
+            switch(index) {
+                case 0: // 分类
+                    newValue = prompt("修改分类（选配件/赠送件）：", currentValue);
+                    if (newValue === '选配件' || newValue === '赠送件') {
+                        newRow.dataset.category = newValue;
+                        this.innerText = newValue;
+                        this.style.color = newValue === '赠送件' ? '#27ae60' : '#333';
+                    }
+                    break;
+                case 1: // 名称
+                    newValue = prompt("修改配件名称：", currentValue);
+                    if (newValue) {
+                        newRow.dataset.name = newValue;
+                        this.innerText = newValue;
+                    }
+                    break;
+                case 2: // 规格
+                    newValue = prompt("修改规格：", currentValue);
+                    if (newValue) {
+                        newRow.dataset.spec = newValue;
+                        this.innerText = newValue;
+                    }
+                    break;
+                case 3: // 单价
+                    newValue = prompt("修改单价（元）：", currentValue);
+                    if (!isNaN(newValue) && newValue >= 0) {
+                        newRow.dataset.price = newValue;
+                        this.innerText = newValue;
+                        newRow.querySelector('.custom-label').innerText = newValue == 0 ? '赠送件' : '选配件';
+                        newRow.querySelector('.custom-label').style.color = newValue == 0 ? '#27ae60' : '#333';
+                        const finalPrice = Number(newRow.dataset.price);
+                        const finalQty = Number(newRow.dataset.qty);
+                        newRow.querySelector('.custom-amount').innerText = (finalPrice * finalQty).toFixed(1);
+                        calcTotal();
+                    }
+                    break;
+            }
+        }, 500);
+        const cancelLongPress = () => {
+            clearTimeout(timer);
+            document.removeEventListener('mouseup', cancelLongPress);
+            document.removeEventListener('mouseleave', cancelLongPress);
+        };
+        document.addEventListener('mouseup', cancelLongPress);
+        document.addEventListener('mouseleave', cancelLongPress);
+    });
+});
+
 
     // 数量修改同步金额
     newRow.querySelector('.custom-qty').addEventListener('input', function() {
